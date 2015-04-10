@@ -80,7 +80,7 @@ int cspin[2] = {A2, A3}; //CS: Current sense ANALOG input
 int enpin[2] = {A0, A1}; //EN: Status of switches output (Analog pin)
 
 // DataPoints and defaults - Some of these will be replaced by inputs from webpage 
-int batchId = 000;               //Beer ID
+int batchId = 0;               	 //Beer ID
 int batchName = "unknown batch"; //Beer Name
 int batchSize = 0;               //Beer Batch Size
 int targetTemp = 0;              //Target Temp of Beer (In Fahrenheit)
@@ -150,32 +150,40 @@ void loop{
     
     	String variableName = "";
     	String variableValue = "";
-    	bool readingName;
+    	bool readingName = false;
+    	
+    	//loop though the message (in HTTP GET format)
     	for(int i = 0; i < message.length();i++){
         	//do somthing with each chr
         	char currentCharacter = message[i];
         
         	if (i == 0){
+        		//the first letter will always be the name
           		readingName = true;
           		variableName += currentCharacter;
-        	}
-        	else if(currentCharacter == '&'){
+        	} else if(currentCharacter == '&'){
+        		//starting the next variable
           		readingName = true;
+          		
+          		//if there is a name recorded
           		if (variableName != ""){
-            		//call function to write variables
-            		recordVariablesFromWeb(variableName, variableValue);
-            		//reset variables for possible next in string 'message'
-            		variableName = "";
-            		variableValue = "";
+            			//write variables
+	            		recordVariablesFromWeb(variableName, variableValue);
+	            		
+	            		//reset variables for possible next in string 'message'
+	            		variableName = "";
+	            		variableValue = "";
           		} 
-        	} 
-        	else if (currentCharacter == '='){
+        	} else if (currentCharacter == '='){
+        		//now reading the value
           		readingName = false;
         	} else {
-		      		if(readingName == true){
+	      		if(readingName == true){
+	      			//add the current letter to the name
 		            	variableName += currentCharacter; 
 		          }
 		          else{
+		          	//add the current letter to the value
 		            	variableValue += currentCharacter;
 		          }
         	}
@@ -196,7 +204,7 @@ void loop{
 	var targetTempLow = targetTemp - 1;  //Low Range
 	
 	//TURN PELTIER AND FAN OFF	
-	if ()(CurrentTemp <= targetTempHigh) && (currentTemp >= targetTempLow)){	
+	if ((CurrentTemp <= targetTempHigh) && (currentTemp >= targetTempLow)){	
 		motorOff(0); //turn off peltier
 		motorOff(1); //turn off pump/fan
 		
@@ -320,7 +328,7 @@ void recordVariablesFromWeb(String variableName, String variableValue){
   else if(variableName == "batchname"){
     batchName = variableValue;
   }
-  else if(variableName == "batchSize"){
+  else if(variableName == "batchsize"){
     batchSize = variableValue.toInt();
   }
   else if(variableName == "targettemp"){
