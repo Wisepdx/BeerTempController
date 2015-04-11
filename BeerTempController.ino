@@ -362,6 +362,17 @@ void displayScreen(){
 	tft.println("Pump Status: ");
 	tft.println("Peltier Status: ");
 }
+
+void overwriteScreenText(int Column, int Row, String DisplayString){
+	int sWidth = DisplayString.length;
+	tft.setCursor(Column,Row);
+	tft.setTextSize(1);
+	tft.setTextColor(ST7735_WHITE);
+	tft.fillRect((charwidth*sWidth),0,(160-(charwidth*sWidth)),charheight,Background);
+	tft.setCursor((charwidth*sWidth),0);
+	tft.print(DisplayString);
+}
+
 void updateScreen(){
 	//use this function to overwrite variables only and not the whole screen
 
