@@ -1,0 +1,31 @@
+For each batch of beer there is a JSON file with some basic info:
+
+BatchName.json
+Note: this file is overwritten each time anything changes
+--- START OF FILE -----------------------------
+{
+  batchName:"unknown batch",
+  batchId:123,
+  targetTemp:123,
+  peltStatus:123,
+  pumpStatus:123,
+  currentTemp:123,
+  ambientTemp:123,
+  currentTempHistory:"FermentorTempHist_(batchId).csv",
+  ambientTempHistory:"AmbientTempHist_(batchId).csv",
+  pumpStatusHistory:"PumpStatusHist_(batchId).csv",
+  peltStatusHistory:"PeltStatusHist_(batchId).csv"
+}
+--- END OF FILE -------------------------------
+
+(Sensor/Status Name)_(Batch ID).csv
+Note: Arduino can just append to the end of this file as needed for each sensor or status to be logged
+--- START OF FILE -----------------------------
+04/11/2015 00:00:00,50.05
+04/11/2015 00:05:00,51.15
+04/11/2015 00:10:00,52.25
+04/11/2015 00:15:00,53.35
+04/11/2015 00:20:00,54.45
+04/11/2015 00:25:00,55.55
+...more entries here...
+--- END OF FILE -------------------------------
