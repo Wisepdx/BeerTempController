@@ -307,6 +307,9 @@ void recordVariablesFromWeb(String variableName, String variableValue){
   else if(variableName == "batchsize"){
     batchSize = variableValue.toInt();
   }
+  else if(variableName == "tempdiff"){
+    tempDiff = variableValue.toInt();
+  }
   else if(variableName == "targettemp"){
     targetTemp = variableValue.toInt();
     //set high/low range of target temperature range
