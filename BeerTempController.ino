@@ -1,4 +1,5 @@
-
+/*-------------- Libraries -----------------
+--------------------------------------------*/
 #include <Adafruit_GFX.h>  // Core graphics library
 #include <Adafruit_ST7735.h>  // Hardware-specific library
 #include <SPI.h>  // Serial Peripheral Interface library (motor controller?? //**)
@@ -7,34 +8,34 @@
 #include <Mailbox.h>  // Mailbox Library
 #include <FileIO.h>  // File IO Library for writing to files
 
-// SET ALL DEFINES HERE
+/*--------------- Defines ------------------
+--------------------------------------------*/
 
-// For the breakout, you can use any 2 or 3 pins
-// These pins will also work for the 1.8" TFT shield
-#define TFT_CS     10
-#define TFT_RST    0  // you can also connect this to the Arduino reset in which case, set this #define pin to 0!
-#define TFT_DC     8
+// TFT Display
+#define TFT_CS 10
+#define TFT_RST 0  // you can also connect this to the Arduino reset in which case, set this #define pin to 0!
+#define TFT_DC 8
 
-// Define Display Pins
+// TFT Display Pins
 #define TFT_SCLK 13 // set these to be whatever pins you like!
 #define TFT_MISO 12 // set these to be whatever pins you like!
 #define TFT_MOSI 11 // set these to be whatever pins you like!
 
-// Define Background and Text Size for text refreshing
-#define Background ST7735_BLACK
-#define charwidth 6 // from AdaFruit GFX
-#define charheight 8  // from AdaFruit GFX
+// TFT Default Background and Text Size
+#define background ST7735_BLACK // set default from AdaFruit GFX
+#define charwidth 6 // set default from AdaFruit GFX
+#define charheight 8  // set default from AdaFruit GFX
 
-// temperature Defines
+// Temperature Sensors
 #define ALLTEMP 0
 #define CURRENT 3
 #define PELTIER 2
 #define AMBIENT 1
 
-// motor Defines
+// Motor Controller
 #define BRAKEVCC 0
-#define CW   1
-#define CCW  2
+#define CW 1
+#define CCW 2
 #define BRAKEGND 3
 #define CS_THRESHOLD 100
 
@@ -46,7 +47,7 @@ DallasTemperature TempSensor(&TempSensorPin);
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK, TFT_RST);
 
 /*
-VNH2SP30 pin definitions
+Motor Controller
 xxx[0] controls '1' outputs (PUMP)
 xxx[1] controls '2' outputs (PELTIER)
 */
@@ -56,7 +57,8 @@ int pwmpin[2] = {5, 6};  // PWM input
 int cspin[2] = {A2, A3}; // CS: Current sense ANALOG input
 int enpin[2] = {A0, A1}; // EN: Status of switches output (Analog pin)
 
-// DataPoints and defaults - Some of these will be replaced by inputs from webpage 
+/*-------------- Datapoints ----------------
+--------------------------------------------*/
 int batchId = 000;  // Beer ID (always make 3 digit)
 String batchName = "unknown batch"; //Beer Name
 int batchSize = 0;  // Beer Batch Size
@@ -68,7 +70,7 @@ String peltStatusReadable = "Off";  // Make Peltier Status Readable
 float currentTemp;  // Current Temperature of Beer (In Fahrenheit)
 float ambientTemp;  // Ambient Temperature of Room (In Fahrenheit)
 float peltTemp; // Current Temperature of Peltier (In Fahrenheit)
-unsigned long time; // Set UpTime
+unsigned long time; // current uptime in milliseconds
 int tempDiff = 2; // Range at which temperature can drift from target 
 int targetTempHigh = targetTemp + tempDiff; // High end of Temp Range
 int targetTempLow = targetTemp - tempDiff;  // Low end of Temp Range
@@ -190,12 +192,12 @@ void loop(){
 
   for(int i=0; i>2; i++){
     if (i=0){   
-        logPath.toCharArray(charBuffer, logPath.length()+ 1);
+      logPath.toCharArray(charBuffer, logPath.length()+ 1);
     }
     else{
       logPath = "/mnt/sd/datafiles/current.json";
       char charBuffer[logPath.length()+ 1];
-        logPath.toCharArray(charBuffer, logPath.length()+ 1);
+      logPath.toCharArray(charBuffer, logPath.length()+ 1);
     }
     if (FileSystem.exists(charBuffer)){
       FileSystem.remove(charBuffer);
@@ -203,52 +205,52 @@ void loop(){
 
     File fileName = FileSystem.open(charBuffer, FILE_APPEND);
 
-      if (fileName) {
-        fileName.print('{batchName: "' + batchName + '"'\
-           + ', batchId: ' + String(batchId) \
-           + ', batchSize: ' + String(batchSize) \
-           + ', targetTemp: ' + targetTemp \
-           + ', peltStatus: ' + peltStatus \
-           + ', pumpStatus: ' + pumpStatus \
-           + ', currentTempHistory: "FermentorTempHist_' + batchId + '.csv"' \
-           + ', ambientTempHistory: "AmbientTempHist_' + batchId + '.csv"' \
-           + ', pumpStatusHistory: "PumpStatusHist_' + batchId + '.csv"' \
-           + ', peltierStatusHistory: "PeltStatusHist_' + batchId + '.csv"' \
-           + '}'); 
-        fileName.close();
-      }
+    if (fileName) {
+      fileName.print('{batchName: "' + batchName + '"'\
+         + ', batchId: ' + String(batchId) \
+         + ', batchSize: ' + String(batchSize) \
+         + ', targetTemp: ' + targetTemp \
+         + ', peltStatus: ' + peltStatus \
+         + ', pumpStatus: ' + pumpStatus \
+         + ', currentTempHistory: "FermentorTempHist_' + batchId + '.csv"' \
+         + ', ambientTempHistory: "AmbientTempHist_' + batchId + '.csv"' \
+         + ', pumpStatusHistory: "PumpStatusHist_' + batchId + '.csv"' \
+         + ', peltierStatusHistory: "PeltStatusHist_' + batchId + '.csv"' \
+         + '}'); 
+      fileName.close();
+    }
   }
 
-    // Create/append logging csv files based on batch ID
-    for (int i = 0; i < 4; i++){
-      //change variable of history
-      String HistFileName;
-      String HistFileVar;
-      if(i=0){
-        HistFileName = "CurrentTempHist_";
-        HistFileVar = String(currentTemp);
-      } else if (i = 1){
-        HistFileName = "AmbientTempHist_";
-        HistFileVar = String(ambientTemp);  
-      } else if (i = 2){
-        HistFileName = "PumpStatusTempHist_";
-        HistFileVar = String(pumpStatus); 
-      } else if (i = 3){
-        HistFileName = "PeltStatusTempHist_";
-        HistFileVar = String(peltStatus); 
-      }
-
-      logPath = "/mnt/sd/datafiles/" + HistFileName + String(batchId) + ".csv";
-      char charBuffer[logPath.length()+ 1];
-      logPath.toCharArray(charBuffer, logPath.length()+ 1);
-
-      File dataFile = FileSystem.open(charBuffer, FILE_APPEND);
-
-      if (dataFile) {
-        dataFile.println(getTimeStamp() + "," + HistFileVar);
-        dataFile.close();
-      }
+  // Create/append logging csv files based on batch ID
+  for (int i = 0; i < 4; i++){
+    //change variable of history
+    String HistFileName;
+    String HistFileVar;
+    if(i=0){
+      HistFileName = "CurrentTempHist_";
+      HistFileVar = String(currentTemp);
+    } else if (i = 1){
+      HistFileName = "AmbientTempHist_";
+      HistFileVar = String(ambientTemp);  
+    } else if (i = 2){
+      HistFileName = "PumpStatusTempHist_";
+      HistFileVar = String(pumpStatus); 
+    } else if (i = 3){
+      HistFileName = "PeltStatusTempHist_";
+      HistFileVar = String(peltStatus); 
     }
+
+    logPath = "/mnt/sd/datafiles/" + HistFileName + String(batchId) + ".csv";
+    char charBuffer[logPath.length()+ 1];
+    logPath.toCharArray(charBuffer, logPath.length()+ 1);
+
+    File dataFile = FileSystem.open(charBuffer, FILE_APPEND);
+
+    if (dataFile) {
+      dataFile.println(getTimeStamp() + "," + HistFileVar);
+      dataFile.close();
+    }
+  }
 
   //Update screen every minute for 5 minutes
   for (int i = 0; i < 5; i++){
@@ -348,7 +350,7 @@ void overwriteScreenText(int Column, int Row, String DisplayString){
   tft.setCursor(Column,Row);
   tft.setTextSize(1);
   tft.setTextColor(ST7735_WHITE);
-  tft.fillRect((charwidth*sWidth),0,(160-(charwidth*sWidth)),charheight,Background);
+  tft.fillRect((charwidth*sWidth),0,(160-(charwidth*sWidth)),charheight,background);
   tft.setCursor((charwidth*sWidth),0);
   tft.print(DisplayString);
 }
@@ -362,9 +364,9 @@ void updateScreen(){
   overwriteScreenText(4,0,String(currentTemp) + " F"); //
   overwriteScreenText(5,0,String(ambientTemp) + " F"); //
   overwriteScreenText(6,0,String(targetTemp) + " F"); 
-  tft.fillRect((charwidth*7),(charheight*7),(160-(charwidth*6)),charheight,Background);
-    tft.setCursor((charwidth*7),charheight*7);
-    printUptime();
+  tft.fillRect((charwidth*6),(charheight*7),(160-(charwidth*6)),charheight,background);
+  tft.setCursor((charwidth*6),charheight*7);
+  printUptime();
   overwriteScreenText(9,0,String(peltTemp) + " F"); //
   overwriteScreenText(10,0,peltStatusReadable);
   overwriteScreenText(11,0,pumpStatusReadable);
