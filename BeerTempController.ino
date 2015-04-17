@@ -1,3 +1,4 @@
+//Sketch uses 28,988 bytes (101%) of program storage space. Maximum is 28,672 bytes.
 /*-------------- Libraries -----------------
 --------------------------------------------*/
 #include <Adafruit_GFX.h>  // Core graphics library
@@ -59,12 +60,12 @@ int enpin[2] = {A0, A1}; // EN: Status of switches output (Analog pin)
 
 /*-------------- Datapoints ----------------
 --------------------------------------------*/
-int batchId = 000;  // Beer ID (always make 3 digit)
-String batchName = "unknown batch"; //Beer Name
+int batchId = 1;  // Beer ID (always make 3 digit)
+//String batchName = "unknown batch"; //Beer Name
 int batchSize = 0;  // Beer Batch Size
 int targetTemp = 60;  // Target Temp of Beer (In Fahrenheit)
 int pumpStatus = 0; // Pump Status (0 = Off, 1 = On)
-int peltStatus = 0; // Peltier Status (0 = Off, 1 = Heat, 2 = Cool)
+int peltStatus = 0; // Peltier Status (0 = Off, 2 = Heat, 1 = Cool)
 String pumpStatusReadable = "Off";  // Make Pump Status Readable
 String peltStatusReadable = "Off";  // Make Peltier Status Readable
 float currentTemp;  // Current Temperature of Beer (In Fahrenheit)
@@ -85,9 +86,9 @@ void setup() {
   //Initialize Bridge and Mailbox
   Bridge.begin();
   Mailbox.begin();
-  FileSystem.begin();
   //For Calculating uptime of Arduino/Batch
-  Serial.begin(9600);     
+  Serial.begin(9600);
+  FileSystem.begin();     
   //Initialize a ST7735S chip
   tft.initR(INITR_BLACKTAB);
   //Flips screen to Landscape
@@ -108,6 +109,7 @@ VOID LOOP START HERE
 */
 
 void loop(){
+  
   //MAILBOX
   String message;
   //if there is a message in the Mailbox
@@ -115,8 +117,13 @@ void loop(){
     // read all the messages present in the queue
     while (Mailbox.messageAvailable()){
       Mailbox.readMessage(message);
-      digitalWrite(13, HIGH); //Reading Message, Turn LED 13 On
-
+      Serial.println(message);
+      for(int a=0;a<4;a++){
+        digitalWrite(13, HIGH); //Reading Message, Turn LED 13 On
+        delay(50);
+        digitalWrite(13, LOW);
+        delay(50);
+      }
       String variableName = "";
       String variableValue = "";
       bool readingName = false;
@@ -157,108 +164,49 @@ void loop(){
       recordVariablesFromWeb(variableName, variableValue);
       digitalWrite(13, LOW); //After Message Read turn LED13 off
     }
+    updateScreen();
   }
-
+  delay(1000);
   //Read variables update and log to file
   readTemp(); // grab all temperatures from sensors and write to variables
 
   //Check temperatures against optimum settings and turn pump/peltier on or off 
-  if ((currentTemp <= targetTempHigh) && (currentTemp >= targetTempLow)){ 
-    //TURN PELTIER AND FAN OFF
-    motorOff(0); //turn off peltier
-    motorOff(1); //turn off pump/fan
-  } else if (currentTemp < targetTemp){
-    //RUN PELTIER AS HEATER
-    if (peltStatus = 0){        
-      motorGo(1,CW,255); //run peltier
-      motorGo(0,CW,110); //run pump/fan
-    }
-    else{}
-  } else if (currentTemp >= targetTemp){
-    //RUN PELTIER AS COOLER
-    if (peltStatus = 0){  
-      motorGo(1,CW,255); //run peltier
-      motorGo(0,CW,110); //run pump/fan
-    }
-    else{}
-  }
+  if (currentTemp < targetTempLow){
 
+    //RUN PELTIER AS HEATER
+      motorGo(1,CCW,255); //run peltier
+      motorGo(0,CW,110); //run pump/fan
+  } else if (currentTemp > targetTempHigh){
+
+    //RUN PELTIER AS COOLER  
+      motorGo(1,CW,255); //run peltier
+      motorGo(0,CW,110); //run pump/fan
+  }
+    else if ((currentTemp <= targetTempHigh) && (currentTemp >= targetTempLow)){ 
+      //TURN PELTIER AND FAN OFF
+      motorOff(0); //turn off peltier
+      motorOff(1); //turn off pump/fan
+  }
+    else{}
+  
+  delay(1000);
   //Update Screen
   updateScreen();
-  
-  //Update Datafiles (one continous data stream, one current data, a couple of CSV)
-    String logPath = "/mnt/sd/datafiles/" + String(batchId) + ".json";
-    char charBuffer[logPath.length()+ 1];
 
-  for(int i=0; i>2; i++){
-    if (i=0){   
-      logPath.toCharArray(charBuffer, logPath.length()+ 1);
-    }
-    else{
-      logPath = "/mnt/sd/datafiles/current.json";
-      char charBuffer[logPath.length()+ 1];
-      logPath.toCharArray(charBuffer, logPath.length()+ 1);
-    }
-    if (FileSystem.exists(charBuffer)){
-      FileSystem.remove(charBuffer);
-    } else {}
+  // new data logger
+  // make a json file [[x,y,z],[x,y,z]]
+  // order of vars: timestamp, id, batch size, targetTemp, peltstatus, pumpStatus, currentTemp, ambientTemp
 
-    File fileName = FileSystem.open(charBuffer, FILE_APPEND);
-
-    if (fileName) {
-      fileName.print('{batchName: "' + batchName + '"'\
-         + ', batchId: ' + String(batchId) \
-         + ', batchSize: ' + String(batchSize) \
-         + ', targetTemp: ' + targetTemp \
-         + ', peltStatus: ' + peltStatus \
-         + ', pumpStatus: ' + pumpStatus \
-         + ', currentTempHistory: "FermentorTempHist_' + batchId + '.csv"' \
-         + ', ambientTempHistory: "AmbientTempHist_' + batchId + '.csv"' \
-         + ', pumpStatusHistory: "PumpStatusHist_' + batchId + '.csv"' \
-         + ', peltierStatusHistory: "PeltStatusHist_' + batchId + '.csv"' \
-         + '}'); 
-      fileName.close();
-    }
-  }
-
-  // Create/append logging csv files based on batch ID
-  for (int i = 0; i < 4; i++){
-    //change variable of history
-    String HistFileName;
-    String HistFileVar;
-    if(i=0){
-      HistFileName = "CurrentTempHist_";
-      HistFileVar = String(currentTemp);
-    } else if (i = 1){
-      HistFileName = "AmbientTempHist_";
-      HistFileVar = String(ambientTemp);  
-    } else if (i = 2){
-      HistFileName = "PumpStatusTempHist_";
-      HistFileVar = String(pumpStatus); 
-    } else if (i = 3){
-      HistFileName = "PeltStatusTempHist_";
-      HistFileVar = String(peltStatus); 
-    }
-
-    logPath = "/mnt/sd/datafiles/" + HistFileName + String(batchId) + ".csv";
-    char charBuffer[logPath.length()+ 1];
-    logPath.toCharArray(charBuffer, logPath.length()+ 1);
-
-    File dataFile = FileSystem.open(charBuffer, FILE_APPEND);
-
-    if (dataFile) {
-      dataFile.println(getTimeStamp() + "," + HistFileVar);
-      dataFile.close();
-    }
-  }
+  writeDataFiles();
 
   //Update screen every minute for 5 minutes
   for (int i = 0; i < 5; i++){
     //delay for 1 minute
-    delay(60000);
+    delay(1000);
     //Update Screen
     updateScreen();
-  }       
+  }
+     
 }
 
 /*
@@ -294,6 +242,61 @@ void readTemp(){
   currentTemp = TempSensor.getTempFByIndex(2);  //(Metal Probe Sensor)
 }
 
+void writeDataFiles(){
+  String logPath = "/mnt/sd/data/" + String(batchId) + ".csv"; // Local log variable for filename
+  char charBuffer[logPath.length()+ 1];
+  logPath.toCharArray(charBuffer, logPath.length()+ 1);
+  
+  String dataStream = getTimeStamp() + "," + batchId + "," + batchSize + "," + targetTemp + "," + currentTemp + "," + ambientTemp + "," + peltStatus + "," + pumpStatus;
+
+  File dataFile = FileSystem.open(charBuffer, FILE_APPEND); // create file or append to it
+
+  if (dataFile) {  
+    dataFile.println(dataStream); //write enclosing JSON bracket
+    dataFile.close(); //close the file
+  }
+/*
+  logPath = "/mnt/sd/data/current.csv";
+  char charBuffer1[logPath.length()+ 1];
+  logPath.toCharArray(charBuffer1, logPath.length()+ 1);
+
+  if (FileSystem.exists(charBuffer1)){
+    FileSystem.remove(charBuffer1);
+  }    
+  File dataFile1 = FileSystem.open(charBuffer1, FILE_APPEND); // create file or append to it
+
+  if (dataFile1) {  
+    dataFile1.println(dataStream); //write enclosing JSON bracket
+    dataFile1.close(); //close the file
+  }
+*/
+
+}
+
+/* original
+void writeDataFile(){
+  String logPath = "/mnt/sd/data/" + String(batchId) + ".json"; // Local log variable for filename
+  char charBuffer[logPath.length()+ 1];
+  logPath.toCharArray(charBuffer, logPath.length()+ 1);
+  if (FileSystem.exists(charBuffer)){
+    File dataFile = FileSystem.open(charBuffer, FILE_WRITE); // if the file already exists open file for writing
+    unsigned long pos = dataFile.position(); //locate position
+    pos = (pos - 1); // stepback a byte(character)
+    dataFile.seek(pos); // move to the new location for writing
+    // write to file [batchName,batchId,BatchSize,targetTemp,currentTemp,ambientTemp,peltStatus,pumpStatus]
+    dataFile.println("["+ batchName + "," + String(batchId) + "," + String(batchSize) + "," + String(targetTemp) + "," + String(currentTemp) + "," + String(ambientTemp) + "," + String(peltStatus) + "," + String(pumpStatus) + "]"); //write enclosing JSON bracket
+    dataFile.close(); //close the file
+  } else{
+    // if the file does not exist
+    File dataFile = FileSystem.open(charBuffer, FILE_APPEND); // create file
+    dataFile.println("["); //write opening JSON bracket
+    // write to file [batchName,batchId,BatchSize,targetTemp,currentTemp,ambientTemp,peltStatus,pumpStatus]
+    dataFile.println("["+ batchName + "," + String(batchId) + "," + String(batchSize) + "," + String(targetTemp) + "," + String(currentTemp) + "," + String(ambientTemp) + "," + String(peltStatus) + "," + String(pumpStatus) + "]"); //write enclosing JSON bracket
+    dataFile.println("]"); //write closing JSON bracket
+    dataFile.close(); //close the file
+  }
+}
+*/
 /*----- PARSE MAILBOX MESSAGE ----------------
 --------------------------------------------*/
 void recordVariablesFromWeb(String variableName, String variableValue){
@@ -303,9 +306,9 @@ void recordVariablesFromWeb(String variableName, String variableValue){
   if(variableName == "batchid"){
     batchId = variableValue.toInt();
   }
-  else if(variableName == "batchname"){
-    batchName = variableValue;
-  }
+  // else if(variableName == "batchname"){
+  //   batchName = variableValue;
+  // }
   else if(variableName == "batchsize"){
     batchSize = variableValue.toInt();
   }
@@ -316,7 +319,7 @@ void recordVariablesFromWeb(String variableName, String variableValue){
     targetTemp = variableValue.toInt();
     //set high/low range of target temperature range
     targetTempHigh = targetTemp + tempDiff;
-    targetTempHigh = targetTemp + tempDiff;
+    targetTempLow = targetTemp - tempDiff;
   }
 }
 
@@ -345,34 +348,58 @@ void displayScreen(){
   tft.println("Peltier Status: ");
 }
 
-void overwriteScreenText(int Column, int Row, String DisplayString){
-  int sWidth = DisplayString.length();
-  tft.setCursor(Column,Row);
-  tft.setTextSize(1);
-  tft.setTextColor(ST7735_WHITE);
-  tft.fillRect((charwidth*sWidth),0,(160-(charwidth*sWidth)),charheight,background);
-  tft.setCursor((charwidth*sWidth),0);
-  tft.print(DisplayString);
-}
-
 void updateScreen(){
   //use this function to overwrite variables only and not the whole screen
   readTemp(); // read all temperatures from sensors
-  overwriteScreenText(0,0,String(batchId)); //
-  overwriteScreenText(1,0,batchName);
-  overwriteScreenText(2,0,String(batchSize) + " Gallons");
-  overwriteScreenText(4,0,String(currentTemp) + " F"); //
-  overwriteScreenText(5,0,String(ambientTemp) + " F"); //
-  overwriteScreenText(6,0,String(targetTemp) + " F"); 
+  tft.setCursor(0,0);
+  tft.setTextSize(1);
+
+  tft.setTextColor(ST7735_WHITE);
+  tft.fillRect((charwidth*4),0,(160-(charwidth*4)),charheight,background);
+  tft.setCursor((charwidth*4),0);
+  tft.println(batchId);
+
+  // tft.setTextColor(ST7735_WHITE);
+  // tft.fillRect((charwidth*12),charheight,(160-(charwidth*12)),charheight,background);
+  // tft.setCursor((charwidth*12),charheight);
+  // tft.println(batchName);
+  
+  tft.fillRect((charwidth*12),charheight*2,(160-(charwidth*12)),charheight,background);
+  tft.setCursor((charwidth*12),charheight*2);
+  tft.println(String(batchSize) + " Gal");
+
+  tft.fillRect((charwidth*14),(charheight*4),(160-(charwidth*14)),charheight,background);
+  tft.setCursor((charwidth*14),charheight*4);
+  tft.println(String(currentTemp) + " F");
+
+  tft.fillRect((charwidth*14),(charheight*5),(160-(charwidth*14)),charheight,background);
+  tft.setCursor((charwidth*14),charheight*5);
+  tft.println(String(ambientTemp) + " F");
+
+  tft.fillRect((charwidth*13),(charheight*6),(160-(charwidth*13)),charheight,background);
+  tft.setCursor((charwidth*13),charheight*6);
+  tft.println(String(targetTemp) + " F");
+
   tft.fillRect((charwidth*6),(charheight*7),(160-(charwidth*6)),charheight,background);
   tft.setCursor((charwidth*6),charheight*7);
-  printUptime();
-  overwriteScreenText(9,0,String(peltTemp) + " F"); //
-  overwriteScreenText(10,0,peltStatusReadable);
-  overwriteScreenText(11,0,pumpStatusReadable);
-}
+  tft.println(String(targetTempHigh) + " " + String(targetTempLow));
 
+  tft.fillRect((charwidth*14),(charheight*9),(160-(charwidth*14)),charheight,background);
+  tft.setCursor((charwidth*14),charheight*9);
+  tft.println(String(peltTemp) + " F");
+
+  tft.fillRect((charwidth*13),(charheight*10),(160-(charwidth*13)),charheight,background);
+  tft.setCursor((charwidth*13),charheight*10);
+  tft.println(pumpStatusReadable);
+
+  tft.fillRect((charwidth*16),(charheight*11),(160-(charwidth*16)),charheight,background);
+  tft.setCursor((charwidth*16),charheight*11);
+  tft.println(peltStatusReadable); 
+
+}
+/*
 void printUptime(){
+  
   //Uptime functions for Displaying Time on screen
   time = millis();
   long days=0;
@@ -390,25 +417,15 @@ void printUptime(){
   if (days>0){ 
     // days will displayed only if value is greater than zero
     tft.print(days);
-    tft.print(" days :");
+    tft.print(" d ");
   }
   tft.print(hours);
-  if  (hours == 1){
-    tft.print(" hour ");
-  }
-  else{  
-    tft.print(" hours ");
-  }
-  if (days<1){
-    tft.print(mins);
-    if (mins == 1){
-      tft.print(" minute");
-    }
-    else{
-      tft.print(" minutes");
-    } 
-  }
+  tft.print(" h ");
+  tft.print(mins);
+  tft.print(" m ");
+  
 }
+*/
 
 /*----- MOTOR SHIELD FUNCTIONS ---------------
 --------------------------------------------*/
@@ -464,10 +481,10 @@ void motorGo(uint8_t motor, uint8_t direct, uint8_t pwm){
       // set pelt status based on motor direction
       if (direct == CW){
         peltStatus = 1;
-        peltStatusReadable = "Heat";
+        peltStatusReadable = "Cool";
       }else if (direct == CCW){
         peltStatus = 2;
-        peltStatusReadable = "Cool";
+        peltStatusReadable = "Heat";
       }
     }
   }
