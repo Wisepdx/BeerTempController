@@ -74,7 +74,7 @@ float ambientTemp;  // Ambient Temperature of Room (In Fahrenheit)
 //float peltTemp; // Current Temperature of Peltier (In Fahrenheit)
 unsigned long time; // current uptime in milliseconds
 String upTime = ""; // holder for uptime
-int tempDiff = 2; // Range at which temperature can drift from target 
+int tempDiff = 1; // Range at which temperature can drift from target 
 int targetTempHigh = targetTemp + tempDiff; // High end of Temp Range
 int targetTempLow = targetTemp - tempDiff;  // Low end of Temp Range
 
@@ -168,6 +168,7 @@ void readTemp(){
 /*----- WRITE DATAFILES --------------------
 --------------------------------------------*/
 void writeDataFiles(){
+  digitalWrite(13, HIGH);
   String logPath = "/mnt/sd/data/" + String(batchId) + ".csv"; // Local log variable for filename
   char charBuffer[logPath.length()+ 1];
   logPath.toCharArray(charBuffer, logPath.length()+ 1);
@@ -194,6 +195,13 @@ void writeDataFiles(){
     dataFile1.println(dataStream); //write csv file
     dataFile1.close(); //close the file
   }
+  digitalWrite(13, LOW);
+  for(int a=0;a<4;a++){
+        digitalWrite(13, HIGH); //Reading Message, Turn LED 13 On
+        delay(50);
+        digitalWrite(13, LOW);
+        delay(50);
+  }
 
 }
 
@@ -203,16 +211,11 @@ void mailboxCheck(){
   String message;
   // If there is a message in the Mailbox
   if (Mailbox.messageAvailable()){
+    digitalWrite(13,HIGH);
     // Read all the messages present in the queue
     while (Mailbox.messageAvailable()){
       Mailbox.readMessage(message);
       // Serial.println(message);
-      for(int a=0;a<4;a++){
-        digitalWrite(13, HIGH); //Reading Message, Turn LED 13 On
-        delay(50);
-        digitalWrite(13, LOW);
-        delay(50);
-      }
       String variableName = "";
       String variableValue = "";
       bool readingName = false;
@@ -295,14 +298,16 @@ void displayScreen(){
   tft.println("     ID: ");
   tft.println("   Name: ");
   tft.println("   Size: ");
-  tft.setCursor(32,0);
+  tft.println();
+  //tft.setCursor(32,0);
   tft.println("Current: ");
   tft.println("Ambient: ");
   tft.println(" Target: ");
   tft.print("Started: ");
   tft.setTextColor(ST7735_WHITE);
   tft.println(String(getTimeStamp()));
-  tft.setCursor(72,0);
+  //tft.setCursor(72,0);
+  //tft.println();
   tft.setTextColor(ST7735_GREEN);
   tft.println("   Pump: ");
   tft.println("Peltier: ");
