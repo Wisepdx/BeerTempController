@@ -4,7 +4,7 @@
 --------------------------------------------*/
 #include <Adafruit_GFX.h>  // Core graphics library
 #include <Adafruit_ST7735.h>  // Hardware-specific library
-#include <SPI.h>  // Serial Peripheral Interface library (motor controller?? //**)
+#include <SPI.h>  // Serial Peripheral Interface library
 #include <DallasTemperature.h>  // Temp Sensor library
 #include <OneWire.h>  // For One Wire Temp Sensor Library
 #include <Mailbox.h>  // Mailbox Library
@@ -61,12 +61,9 @@ String batchName = "unknown batch"; //Beer Name
 int batchSize = 0;  // Beer Batch Size
 int targetTemp = 60;  // Target Temp of Beer (In Fahrenheit)
 int pumpStatus = 0; // Pump Status (0 = Off, 1 = On)
-int peltStatus = 0; // Peltier Status (0 = Off, 2 = Heat, 1 = Cool)
-//String pumpStatusReadable = "Off";  // Make Pump Status Readable
-//String peltStatusReadable = "Off";  // Make Peltier Status Readable
+int peltStatus = 0; // Peltier Status (0 = Off, 1 = Cool, 2 = Heat)
 float currentTemp;  // Current Temperature of Beer (In Fahrenheit)
 float ambientTemp;  // Ambient Temperature of Room (In Fahrenheit)
-//float peltTemp; // Current Temperature of Peltier (In Fahrenheit)
 unsigned long time; // current uptime in milliseconds
 String upTime = ""; // holder for uptime
 int tempDiff = 1; // Range at which temperature can drift from target 
@@ -109,6 +106,9 @@ void loop(){
   
   // Check/Read the mailbox
   mailboxCheck();
+  
+  //update the screen
+  updateScreen();
 
   // Check temperatures against optimum settings and turn pump/peltier on or off, update screen with new statuses and temps 
   motorCheck();
@@ -124,7 +124,7 @@ void loop(){
   //Update screen every minute for 5 minutes, then loop to top
   for (int i = 0; i < 5; i++){
     // Delay for 1 minute
-    delay(6000);
+    delay(1000);
     // Update Screen
     updateScreen();
   }  
@@ -173,8 +173,6 @@ void writeDataFiles(){
   
   String header = "Date,ID,Name,Size,Target,Current,Ambient,Pump,Pelt";
   String dataStream = getTimeStamp() + "," + batchId + "," + batchName + "," + batchSize + "," + targetTemp + "," + currentTemp + "," + ambientTemp + "," + pumpStatus + "," + peltStatus;
-
-  
 
   if (FileSystem.exists(charBuffer)){
     File dataFile = FileSystem.open(charBuffer, FILE_APPEND); // create file or append to it
@@ -289,9 +287,9 @@ void recordVariablesFromWeb(String variableName, String variableValue){
   else if(variableName == "targettemp"){
     targetTemp = variableValue.toInt();
     //set high/low range of target temperature range
-    targetTempHigh = targetTemp + tempDiff;
-    targetTempLow = targetTemp - tempDiff;
   }
+  targetTempHigh = targetTemp + tempDiff;
+  targetTempLow = targetTemp - tempDiff;
 }
 
 /*----- DISPLAY FUNCTIONS --------------------
@@ -326,7 +324,6 @@ void overwriteScreenText(int Column, int Row, String DisplayString){
   tft.setCursor(Column*6,Row*8);
   tft.setTextSize(1);
   tft.setTextColor(ST7735_WHITE, ST7735_BLACK);
-  //tft.fillRect(54,Row*8,(160-(6*DisplayString.length())),8,ST7735_BLACK);
   tft.setCursor(48,Row*8);
   tft.print(DisplayString);
 }
@@ -335,31 +332,15 @@ void updateScreen(){
   //use this function to overwrite variables only and not the whole screen
   readTemp(); // read all temperatures from sensors
   tft.setCursor(0,0);
-  
   overwriteScreenText(0,0, String(batchId));
   overwriteScreenText(0,1, batchName);
   overwriteScreenText(0,2, String(batchSize) + " Gal");
-
   overwriteScreenText(0,4, String(currentTemp) + " F");
   overwriteScreenText(0,5, String(ambientTemp) + " F");
   overwriteScreenText(0,6, String(targetTemp) + " F");
   // Display Started time instead Time. Set in displayScreen()
-  if (pumpStatus = 0){
-    overwriteScreenText(0,9, "Off");
-  }else{
-    overwriteScreenText(0,9, "On");
-  }
-  //overwriteScreenText(0,9, pumpStatusReadable);
-  if (peltStatus = 0){
-    overwriteScreenText(0,10, "Off");
-  } else {
-    if(peltStatus = 1){
-      overwriteScreenText(0,10, "Cool");
-    }else{
-      overwriteScreenText(0,10, "Heat");
-    }
-  }
-  //overwriteScreenText(0,10, peltStatusReadable);
+  overwriteScreenText(0,9, String(pumpStatus)); // 0 off ; 1 on
+  overwriteScreenText(0,10, String(peltStatus)); // 0 off ; 1 cool ; 2 heat
 
 }
 
@@ -395,7 +376,6 @@ void motorOff(int motor){
     //pumpStatusReadable = "Off";
   }else if (motor == 1){
     peltStatus = 0;
-    //peltStatusReadable = "Off";
   }
   analogWrite(pwmpin[motor], 0);
 }
@@ -434,12 +414,10 @@ void motorGo(uint8_t motor, uint8_t direct, uint8_t pwm){
       //pumpStatusReadable = "On";
     }else if (motor == 1){
       // set pelt status based on motor direction
-      if (direct == CW){
-        peltStatus = 1;
-        //peltStatusReadable = "Cool";
-      }else if (direct == CCW){
+      if (direct == CCW){
         peltStatus = 2;
-        //peltStatusReadable = "Heat";
+      }else if (direct == CW){
+        peltStatus = 1;
       }
     }
   }
