@@ -27,21 +27,24 @@
 
   <script type='text/javascript'>
 
-var csvString = "";
-var csvArray = [];
-
-function debug(Message){
+function debug(message){
   $("#debug").append("<div class='debugMessage'>" + message + "</div>")
 }
 
 $(document).ready(function () {
     //load and parse the data
-    var dataUrl = "data/testData.js";
-    csvString = $.get(dataUrl, function( data ) { 
-      debug("Loaded data.");
-      csvArray = parseCsvSimple(csvString, 1);
+  $.ajax({
+    method: "GET",
+    url: "data/testData.js",
+    dataType: "text",
+    success: function(data) {
+      debug("Load success.");
+      var csvArray = parseCsvSimple(data, 1);
       createHistoryChart(csvArray);
-    });
+    }, fail: function() {
+      debug("Error loading data");
+    }
+  });
 });
 
 // create the actual chart after the data is loaded
@@ -49,7 +52,7 @@ function createHistoryChart(data){
   
         $('#container').highcharts('StockChart', {
             title: {
-                text: 'Batch #' + getColumn(csvArray,1)[0] + " History",
+                text: 'Batch #' + getColumn(data,1)[0] + " History",
             }, subtitle: {
                 text: ''
             }, xAxis: {
