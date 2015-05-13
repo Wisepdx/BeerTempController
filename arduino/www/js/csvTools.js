@@ -28,11 +28,12 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
       return null;
     }
   
-    var lines = csvString.split('\r\n');
+    var lines = csvString.split('\n');
     var output = new Array();
     
     for(var i = ignoreHeaderRows; i < lines.length; i++){
         //for each line
+        lines[i] = lines[i].split('\r').join('')
         var items = lines[i].split(',');
         var outputLine = new Array();
     
