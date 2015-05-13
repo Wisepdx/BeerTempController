@@ -23,20 +23,20 @@
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/csvTools.js"></script>
+    <script src="js/highstock.js"></script>
 
   <script type='text/javascript'>
 
 var csvString = "";
+var csvArray = [];
 
 function debug(Message){
   $("#debug").append("<div class='debugMessage'>" + message + "</div>")
 }
 
-
-var csvArray = [];    
 $(document).ready(function () {
     //load and parse the data
-    var dataUrl = "https://raw.githubusercontent.com/Wisepdx/BeerTempController/master/arduino/www/data/testData.js";
+    var dataUrl = "data/testData.js";
     csvString = $.get(dataUrl, function( data ) { 
       debug("Loaded data.");
       csvArray = parseCsvSimple(csvString, 1);
@@ -149,8 +149,6 @@ function createHistoryChart(data){
 
       <div class="starter-template" style="padding: 40px 15px;text-align: center;">
         <h1>Test Page 3</h1>
-        <script src="http://code.highcharts.com/stock/highstock.js"></script>
-        <script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
         <div id="container" style="height: 400px; min-width: 310px"></div>
         <div id="debug"></div>
       </div>
