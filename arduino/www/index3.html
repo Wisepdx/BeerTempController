@@ -32,7 +32,7 @@
 
   <script type='text/javascript'>
 
-  /*___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
+/*___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
 ___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
 _|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
 ___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
@@ -57,6 +57,11 @@ var csvString = "";
 
 //Takes a CSV and converts it to an JS array
 function parseCsvSimple(csvString, ignoreHeaderRows){
+    if(csvString === "undefined"){
+      debug("Error parsing CSV string, the string was undefined.");\
+      return null;
+    }
+  
     var lines = csvString.split('\r\n');
     var output = new Array();
     
@@ -74,6 +79,10 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
     }
     
     return output;
+}
+
+function debug(Message){
+  $("#debug").append("<div class='debugMessage'>" + message + "</div>")
 }
 
 //takes an unknown string and returns an object
@@ -132,16 +141,15 @@ var csvArray = [];
 $(document).ready(function () {
     //load and parse the data
     csvString = $.get( "data/test.csv", function( data ) { 
-      csvArray = parseCsvSimple(data);
+      debug("Loaded data.");
+      csvArray = parseCsvSimple(csvString, 1);
+      createChart();
     });
-    //loadData();
-    csvArray = parseCsvSimple(csvString, 1);
-    createChart();
 });
 
 // create the actual chart after the data is loaded
 function createChart(){
-
+  
         $('#container').highcharts('StockChart', {
 
             title: {
@@ -216,14 +224,6 @@ function createChart(){
         });
 }
 
-function loadData(){
-    //this should be loaded from a file
-    $.get( "data/test.csv", function( data ) { 
-      csvArray = parseCsvSimple(data);
-    });
-    //return "Date,ID,Size,Target,Current,Ambient,Pump,Pelt\n4/18/2015 21:14,1,0,60,70,70.00,1,1\n4/18/2015 21:19,1,0,60,69.6,69.20,1,1\n4/18/2015 21:24,1,0,60,69.5,68.50,1,1\n4/18/2015 21:29,1,0,60,69.25,70.10,1,1
-}
-
  /*_________________          _-_
  \==============_=_/ ____.---'---`---.____
              \_ \    \----._________.----/
@@ -266,6 +266,7 @@ function loadData(){
         <script src="http://code.highcharts.com/stock/highstock.js"></script>
         <script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
         <div id="container" style="height: 400px; min-width: 310px"></div>
+        <div id="debug"></div>
       </div>
 
     </div>
