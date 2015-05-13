@@ -19,152 +19,42 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    
+
     <script src="js/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
-    <!-- test chart -->
-    <!--<script src="js/charting.js"></script>-->
-
-
-  <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'></script>
+    <script src="js/csvTools.js"></script>
 
   <script type='text/javascript'>
 
-/*___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|__|____|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|__/-------------------\_|__|___|___|___|___|___|
-___|___|___|___|___|___|  THE GREAT BEERWALL |_|___|___|___|___|___|__
-_|___|___|___|___|___|__\-------------------/|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|__
-_|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|
-___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___|___*/
-
 var csvString = "";
-
-//-------------- CSV STUFF
-
-//Takes a CSV and converts it to an JS array
-function parseCsvSimple(csvString, ignoreHeaderRows){
-    if(csvString === "undefined"){
-      debug("Error parsing CSV string, the string was undefined.");
-      return null;
-    }
-  
-    var lines = csvString.split('\r\n');
-    var output = new Array();
-    
-    for(var i = ignoreHeaderRows; i < lines.length; i++){
-        //for each line
-        var items = lines[i].split(',');
-        var outputLine = new Array();
-    
-        for(var i2 = 0; i2 < items.length; i2++){
-            //for each item in the line
-            outputLine[i2] = parseSomthing(items[i2]);
-        }
-        
-        output[i-ignoreHeaderRows] = outputLine;
-    }
-    
-    return output;
-}
 
 function debug(Message){
   $("#debug").append("<div class='debugMessage'>" + message + "</div>")
 }
 
-//takes an unknown string and returns an object
-function parseSomthing(input){
-    var f = parseFloat(input);
-    var d = new Date(input);
-    
-    if((input.toString().indexOf(":") > 0) && (!isNaN(d))) {
-        return d.getTime(); 
-        //note: this returns a EPOCH formatted number, which is the only kind of date highcharts understands
-    } else if(!isNaN(f)){ 
-        return f; //A number or float
-    } else { 
-        return input; //somthing else, maybe a string or null
-    }
-}
 
-//Selects a column from a multidimentional array
-function getColumn(jsArray, columnIndex){
-    var output = new Array();
-    
-    for(var i = 0; i < jsArray.length; i++){
-        if(jsArray[i].length >= columnIndex){
-            output[i] = jsArray[i][columnIndex]
-        }
-    }
-    
-    return output;
-}
-
-//Selects any dimentions (columns) from a multidimentional array
-function getColumns(jsArray, columnIndexes){
-    var output = new Array();
-    
-    for(var i = 0; i < jsArray.length; i++){
-        var pointArray = new Array();
-        
-        for(var i2 = 0; i2 < columnIndexes.length; i2++) {    
-            if(i2 >= 0 && jsArray[i2].length >= i2) {
-                pointArray[i2] = jsArray[i][columnIndexes[i2]];
-            }
-        }
-        
-        output[i] = pointArray;
-    }
-    
-    return output;
-}
-
-//-------------- Chart Stuff
-//Modified version of: http://www.highcharts.com/stock/demo/intraday-area
-//Chart Options Reference: http://api.highcharts.com/highstock
-//HTML needs to include: https://code.highcharts.com/stock/highstock.js
 var csvArray = [];    
-
 $(document).ready(function () {
     //load and parse the data
-    csvString = $.get( "data/test.csv", function( data ) { 
+    var dataUrl = "https://raw.githubusercontent.com/Wisepdx/BeerTempController/master/arduino/www/data/testData.js";
+    csvString = $.get(dataUrl, function( data ) { 
       debug("Loaded data.");
       csvArray = parseCsvSimple(csvString, 1);
-      createChart();
+      createHistoryChart(csvArray);
     });
 });
 
 // create the actual chart after the data is loaded
-function createChart(){
+function createHistoryChart(data){
   
         $('#container').highcharts('StockChart', {
-
             title: {
                 text: 'Batch #' + getColumn(csvArray,1)[0] + " History",
-            },
-
-            subtitle: {
+            }, subtitle: {
                 text: ''
-            },
-
-            xAxis: {
+            }, xAxis: {
                 gapGridLineWidth: 0
-            },
-
-            rangeSelector : {
+            }, rangeSelector : {
                 buttons : [{
                     type : 'hour',
                     count : 1,
@@ -188,23 +78,19 @@ function createChart(){
                 }],
                 selected : 1,
                 inputEnabled : false
-            },
-
-            series : [{
+            }, series : [{
                 name : 'Current',
                 type: 'area',
-                data : getColumns(csvArray,[0,4]),
+                data : getColumns(data,[0,4]),
                 tooltip: {
                     valueDecimals: 2
-                },
-                fillColor : {
+                }, fillColor : {
                     linearGradient : {
                         x1: 0,
                         y1: 0,
                         x2: 0,
                         y2: 1
-                    },
-                    stops : [
+                    }, stops : [
                         [0, Highcharts.getOptions().colors[0]],
                         [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
                     ]
