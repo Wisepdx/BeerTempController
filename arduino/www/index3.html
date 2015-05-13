@@ -102,12 +102,12 @@ function createHistoryChart(data){
             },{
                 name : 'Target',
                 type: 'line',
-                data : getColumns(csvArray,[0,3]),
+                data : getColumns(data,[0,3]),
                 threshold: null
             },{
                 name : 'Ambient',
                 type: 'line',
-                data : getColumns(csvArray,[0,5]),
+                data : getColumns(data,[0,5]),
                 threshold: null
             }]
         });
