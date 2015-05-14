@@ -50,7 +50,12 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
 }
 
 function isEmptyOrSpaces(str){
-    return str === null || str === 'undefined' || str.match(/^ *$/) !== null;
+    if(str typeof 'string'){
+        return str === null || str === 'undefined' || str.match(/^ *$/) !== null;    
+    } else {
+        return true;
+    }
+    
 }
 
 //takes an unknown string and returns an object
