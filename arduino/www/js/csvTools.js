@@ -42,8 +42,9 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
                 //for each item in the line
                 outputLine[i2] = parseSomthing(items[i2]);
             }    
+            
+            output[i-ignoreHeaderRows] = outputLine;
         }
-        output[i-ignoreHeaderRows] = outputLine;
     }
     
     return output;
