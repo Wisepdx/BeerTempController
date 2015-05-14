@@ -37,7 +37,7 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
         var items = lines[i].split(',');
         var outputLine = new Array();
     
-        if(isEmptyOrSpaces(items) == false){
+        if(isEmptyOrSpaces(lines[i]) == false){
             for(var i2 = 0; i2 < items.length; i2++){
                 //for each item in the line
                 outputLine[i2] = parseSomthing(items[i2]);
@@ -51,7 +51,7 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
 
 function isEmptyOrSpaces(str){
     if(typeof str === 'string'){
-        return str === null || str === 'undefined' || str.match(/^ *$/) !== null;    
+        return str === null || str === 'undefined' || str.match(/\s+$/) !== null;    
     } else {
         return true;
     }
