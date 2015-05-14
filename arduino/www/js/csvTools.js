@@ -51,7 +51,7 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
 
 function isEmptyOrSpaces(str){
     if(typeof str === 'string'){
-        return str === null || str === 'undefined' || str.match(/\s+$/) !== null;    
+        return str === null || str === 'undefined' || str == '' || str.match(/\s+$/) !== null;    
     } else {
         return true;
     }
