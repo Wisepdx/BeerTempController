@@ -37,15 +37,20 @@ function parseCsvSimple(csvString, ignoreHeaderRows){
         var items = lines[i].split(',');
         var outputLine = new Array();
     
-        for(var i2 = 0; i2 < items.length; i2++){
-            //for each item in the line
-            outputLine[i2] = parseSomthing(items[i2]);
+        if(isEmptyOrSpaces(items) == false){
+            for(var i2 = 0; i2 < items.length; i2++){
+                //for each item in the line
+                outputLine[i2] = parseSomthing(items[i2]);
+            }    
         }
-        
         output[i-ignoreHeaderRows] = outputLine;
     }
     
     return output;
+}
+
+function isEmptyOrSpaces(str){
+    return str === null || str.match(/^ *$/) !== null;
 }
 
 //takes an unknown string and returns an object
@@ -74,6 +79,30 @@ function getColumn(jsArray, columnIndex){
     }
     
     return output;
+}
+
+//Selects a column from a multidimentional array and checks if all the values are sequencial (for HighStock)
+function checkColumnSequencial(jsArray, columnIndex){
+    var lastValue;
+    
+    for(var i = 0; i < jsArray.length; i++){
+        if(jsArray[i].length >= columnIndex){
+            if(isNaN(output[i])){
+                return false;
+            }
+            if(i=0){
+                lastValue = output[i];
+            } else {
+                if(output[i] < lastValue){
+                    return false;
+                } else {
+                    lastValue = output[i];
+                }
+            }
+        }
+    }
+    
+    return true;
 }
 
 //Selects any dimentions (columns) from a multidimentional array
