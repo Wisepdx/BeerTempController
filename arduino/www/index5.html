@@ -31,6 +31,8 @@ function debug(message){
   $("#debug").append("<div class='debugMessage'>" + message + "</div>")
 }
 
+var csvArray;
+
 $(document).ready(function () {
     //load and parse the data
   $.ajax({
@@ -39,7 +41,7 @@ $(document).ready(function () {
     dataType: "text",
     success: function(data) {
       debug("Load success.");
-      var csvArray = parseCsvSimple(data, 1);
+      csvArray = parseCsvSimple(data, 1);
       createHistoryChart(csvArray);
     }, fail: function() {
       debug("Error loading data");
