@@ -33,11 +33,10 @@ function debug(message){
 
 var csvArray;
 
-$(document).ready(function () {
-    //load and parse the data
-  $.ajax({
+function loadFile(path){
+    $.ajax({
     method: "GET",
-    url: "data/test.csv",
+    url: path,
     dataType: "text",
     success: function(data) {
       debug("Load success.");
@@ -47,6 +46,15 @@ $(document).ready(function () {
       debug("Error loading data");
     }
   });
+}
+
+$(document).ready(function () {
+  //load and parse the data
+  loadFile("data/test.csv");
+});
+
+$("#loadLink").click(function(){
+  loadFile($("#loadBox").val())
 });
 
 // create the actual chart after the data is loaded
@@ -155,6 +163,9 @@ function createHistoryChart(data){
       <div class="starter-template" style="padding: 40px 15px;text-align: center;">
         <h1>Test Page 3</h1>
         <div id="container" style="height: 400px; min-width: 310px"></div>
+        <div id="loadFile">
+          <input type="text" id="loadBox">data/text.csv</input>
+          <a href="#" id="loadLink">Load File</a></div>
         <div id="debug"></div>
       </div>
 
