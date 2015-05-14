@@ -84,7 +84,7 @@ function createHistoryChart(data){
             }, series : [{
                 name : 'Current',
                 type: 'area',
-                data : getColumns(data,[0,5]),
+                data : getColumns(data,[0,4]),
                 tooltip: {
                     valueDecimals: 2
                 }, fillColor : {
@@ -102,12 +102,12 @@ function createHistoryChart(data){
             },{
                 name : 'Target',
                 type: 'line',
-                data : getColumns(data,[0,4]),
+                data : getColumns(data,[0,3]),
                 threshold: null
             },{
                 name : 'Ambient',
                 type: 'line',
-                data : getColumns(data,[0,6]),
+                data : getColumns(data,[0,5]),
                 threshold: null
             }]
         });
