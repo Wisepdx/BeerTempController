@@ -32,6 +32,7 @@ function debug(message){
 }
 
 var csvArray;
+var csvString;
 
 function loadFile(path){
     $.ajax({
@@ -40,6 +41,7 @@ function loadFile(path){
     dataType: "text",
     success: function(data) {
       debug("Load success.");
+      csvString = data;
       csvArray = parseCsvSimple(data, 1);
       createHistoryChart(csvArray);
     }, fail: function() {
