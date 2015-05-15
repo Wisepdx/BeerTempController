@@ -36,6 +36,7 @@ function debug(message){
 
 var csvArray;
 var csvString;
+var currentCsvArray;
 var lastUpdate;
 
 function loadFile(path){
@@ -100,7 +101,9 @@ function createHistoryChart(data){
                 }],
                 selected : 1,
                 inputEnabled : false
-            }, series : [{
+            }, credits: {
+               enabled: false
+       	    }, series : [{
                 name : 'Current',
                 type: 'area',
                 data : getColumns(data,[0,4]),
@@ -210,6 +213,8 @@ function setupLiveCharts() {
             title: {
                 text: 'Ambient'
             }
+        }, credits: {
+            enabled: false
         }, series: [{
             name: 'Ambient',
             data: [1],
@@ -239,7 +244,7 @@ function updateLiveCharts() {
 	  dataType: "text",
 	  success: function(data) {
 	    debug("Loaded: " + path);
-	    var currentCsvArray = parseCsvSimple(data, 1);
+	    currentCsvArray = parseCsvSimple(data, 1);
 	    
 	    if(currentCsvArray.length == 1){
 	      var point,
