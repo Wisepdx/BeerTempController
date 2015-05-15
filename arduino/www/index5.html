@@ -33,6 +33,7 @@ function debug(message){
 
 var csvArray;
 var csvString;
+var lastUpdate;
 
 function loadFile(path){
     $.ajax({
@@ -40,7 +41,7 @@ function loadFile(path){
     url: path,
     dataType: "text",
     success: function(data) {
-      debug("Load success.");
+      debug("Loaded: " + path);
       csvString = data;
       csvArray = parseCsvSimple(data, 1);
       createHistoryChart(csvArray);
@@ -125,6 +126,171 @@ function createHistoryChart(data){
         });
 }
 
+//creates the charts that are updated with current data
+function startGauges() {
+
+    var gaugeOptions = {
+
+        chart: {
+            type: 'solidgauge'
+        },
+
+        title: null,
+
+        pane: {
+            center: ['50%', '85%'],
+            size: '140%',
+            startAngle: -90,
+            endAngle: 90,
+            background: {
+                backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || '#EEE',
+                innerRadius: '60%',
+                outerRadius: '100%',
+                shape: 'arc'
+            }
+        },
+
+        tooltip: {
+            enabled: false
+        },
+
+        // the value axis
+        yAxis: {
+            stops: [
+                [0.1, '#55BF3B'], // green
+                [0.5, '#DDDF0D'], // yellow
+                [0.9, '#DF5353'] // red
+            ],
+            lineWidth: 0,
+            minorTickInterval: null,
+            tickPixelInterval: 400,
+            tickWidth: 0,
+            title: {
+                y: -70
+            },
+            labels: {
+                y: 16
+            }
+        },
+
+        plotOptions: {
+            solidgauge: {
+                dataLabels: {
+                    y: 5,
+                    borderWidth: 0,
+                    useHTML: true
+                }
+            }
+        }
+    };
+
+    // The speed gauge
+    $('#container-current').highcharts(Highcharts.merge(gaugeOptions, {
+        yAxis: {
+            min: 0,
+            max: 100,
+            title: {
+                text: 'Current Temp'
+            }
+        },
+
+        credits: {
+            enabled: false
+        },
+
+        series: [{
+            name: 'Current Temp',
+            data: [50],
+            dataLabels: {
+                format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+                    ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span><br/>' +
+                       '<span style="font-size:12px;color:silver">km/h</span></div>'
+            },
+            tooltip: {
+                valueSuffix: ' c'
+            }
+        }]
+
+    }));
+
+    // The current temp gauge
+    $('#container-ambient').highcharts(Highcharts.merge(gaugeOptions, {
+        yAxis: {
+            min: 0,
+            max: 100,
+            title: {
+                text: 'Ambient'
+            }
+        },
+
+        series: [{
+            name: 'Ambient',
+            data: [1],
+            dataLabels: {
+                format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+                    ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y:.1f}</span><br/>' +
+                       '<span style="font-size:12px;color:silver">* 1000 / min</span></div>'
+            },
+            tooltip: {
+                valueSuffix: ' c'
+            }
+        }]
+
+      // could add more charts here
+    }));
+
+    //Run this every 30 seconds
+    setInterval(function () {
+        path = "files/current.csv";
+        
+        $.ajax({
+          method: "GET",
+          url: path,
+          dataType: "text",
+          success: function(data) {
+            debug("Loaded: " + path);
+            var currentCsvArray = parseCsvSimple(data, 1);
+            
+            if(currentCsvArray.length == 1){
+              var point,
+                  newVal,
+                  inc;
+              
+              // push into current temp
+              var chart = $('#container-current').highcharts();
+              if (chart) {
+                  point = chart.series[0].points[0];
+                  point.y = currentCsvArray[5];
+                  point.update(newVal);
+              }
+      
+              // push into ambient temp
+              chart = $('#container-ambient').highcharts();
+              if (chart) {
+                  point = chart.series[0].points[0];
+                  point.y = currentCsvArray[6];
+                  point.update(newVal);
+              }
+              
+              if(lastUpdate != currentCsvArray[0]){
+                //this data is new
+                lastUpdate = currentCsvArray[0];
+                
+                //push points into history?
+              }
+
+              //more charts here
+            }
+
+          }, fail: function() {
+            debug("Error loading: " + path);
+          }
+        });
+
+    }, 30000);
+
+}
+
  /*_________________          _-_
  \==============_=_/ ____.---'---`---.____
              \_ \    \----._________.----/
@@ -164,10 +330,14 @@ function createHistoryChart(data){
 
       <div class="starter-template" style="padding: 40px 15px;text-align: center;">
         <h1>Test Page</h1>
+        <div style="width: 100%; height: 225px; margin: 0 auto">
+	        <div id="container-speed" style="width: 50%; height: 200px; float: left"></div>
+	        <div id="container-rpm" style="width: 50%; height: 200px; float: left"></div>
+        </div>
         <div id="container" style="height: 400px; min-width: 310px"></div>
         <hr/>
         <div id="loadFile">
-          <input type="text" id="loadBox" value="data/text.csv"></input>
+          <input type="text" id="loadBox" value="data/test.csv"></input>
           <a href="#" id="loadLink">Load File</a></div>
         <hr/>
         <div id="debug"></div>
