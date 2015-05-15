@@ -58,6 +58,9 @@ $(document).ready(function () {
   $("#loadLink").click(function(){
     loadFile($("#loadBox").val());
   });
+  
+  setupLiveCharts();
+  updateLiveCharts();
 });
 
 // create the actual chart after the data is loaded
@@ -127,16 +130,13 @@ function createHistoryChart(data){
 }
 
 //creates the charts that are updated with current data
-function startGauges() {
+function setupLiveCharts() {
 
     var gaugeOptions = {
 
         chart: {
             type: 'solidgauge'
-        },
-
-        title: null,
-
+        }, title: null,
         pane: {
             center: ['50%', '85%'],
             size: '140%',
@@ -148,14 +148,9 @@ function startGauges() {
                 outerRadius: '100%',
                 shape: 'arc'
             }
-        },
-
-        tooltip: {
+        }, tooltip: {
             enabled: false
-        },
-
-        // the value axis
-        yAxis: {
+        }, yAxis: {
             stops: [
                 [0.1, '#55BF3B'], // green
                 [0.5, '#DDDF0D'], // yellow
@@ -167,13 +162,10 @@ function startGauges() {
             tickWidth: 0,
             title: {
                 y: -70
-            },
-            labels: {
+            }, labels: {
                 y: 16
             }
-        },
-
-        plotOptions: {
+        }, plotOptions: {
             solidgauge: {
                 dataLabels: {
                     y: 5,
@@ -184,7 +176,7 @@ function startGauges() {
         }
     };
 
-    // The speed gauge
+    // The current gauge
     $('#container-current').highcharts(Highcharts.merge(gaugeOptions, {
         yAxis: {
             min: 0,
@@ -192,28 +184,22 @@ function startGauges() {
             title: {
                 text: 'Current Temp'
             }
-        },
-
-        credits: {
+        }, credits: {
             enabled: false
-        },
-
-        series: [{
+        }, series: [{
             name: 'Current Temp',
             data: [50],
             dataLabels: {
                 format: '<div style="text-align:center"><span style="font-size:25px;color:' +
                     ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span><br/>' +
                        '<span style="font-size:12px;color:silver">km/h</span></div>'
-            },
-            tooltip: {
+            }, tooltip: {
                 valueSuffix: ' c'
             }
         }]
-
     }));
 
-    // The current temp gauge
+    // The current ambient temp gauge
     $('#container-ambient').highcharts(Highcharts.merge(gaugeOptions, {
         yAxis: {
             min: 0,
@@ -221,17 +207,14 @@ function startGauges() {
             title: {
                 text: 'Ambient'
             }
-        },
-
-        series: [{
+        }, series: [{
             name: 'Ambient',
             data: [1],
             dataLabels: {
                 format: '<div style="text-align:center"><span style="font-size:25px;color:' +
                     ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y:.1f}</span><br/>' +
                        '<span style="font-size:12px;color:silver">* 1000 / min</span></div>'
-            },
-            tooltip: {
+            }, tooltip: {
                 valueSuffix: ' c'
             }
         }]
@@ -240,54 +223,56 @@ function startGauges() {
     }));
 
     //Run this every 30 seconds
-    setInterval(function () {
-        path = "files/current.csv";
-        
-        $.ajax({
-          method: "GET",
-          url: path,
-          dataType: "text",
-          success: function(data) {
-            debug("Loaded: " + path);
-            var currentCsvArray = parseCsvSimple(data, 1);
-            
-            if(currentCsvArray.length == 1){
-              var point,
-                  newVal,
-                  inc;
-              
-              // push into current temp
-              var chart = $('#container-current').highcharts();
-              if (chart) {
-                  point = chart.series[0].points[0];
-                  point.y = currentCsvArray[5];
-                  point.update(newVal);
-              }
-      
-              // push into ambient temp
-              chart = $('#container-ambient').highcharts();
-              if (chart) {
-                  point = chart.series[0].points[0];
-                  point.y = currentCsvArray[6];
-                  point.update(newVal);
-              }
-              
-              if(lastUpdate != currentCsvArray[0]){
-                //this data is new
-                lastUpdate = currentCsvArray[0];
-                
-                //push points into history?
-              }
+    setInterval(updateLiveCharts, 30000);
 
-              //more charts here
-            }
+}
 
-          }, fail: function() {
-            debug("Error loading: " + path);
-          }
-        });
-
-    }, 30000);
+function updateLiveCharts() {
+	path = "data/current.csv";
+	
+	$.ajax({
+	  method: "GET",
+	  url: path,
+	  dataType: "text",
+	  success: function(data) {
+	    debug("Loaded: " + path);
+	    var currentCsvArray = parseCsvSimple(data, 1);
+	    
+	    if(currentCsvArray.length == 1){
+	      var point,
+	          newVal,
+	          inc;
+	      
+	      // push into current temp
+	      var chart = $('#container-current').highcharts();
+	      if (chart) {
+	          point = chart.series[0].points[0];
+	          point.y = currentCsvArray[5];
+	          point.update(newVal);
+	      }
+	
+	      // push into ambient temp
+	      chart = $('#container-ambient').highcharts();
+	      if (chart) {
+	          point = chart.series[0].points[0];
+	          point.y = currentCsvArray[6];
+	          point.update(newVal);
+	      }
+	      
+	      if(lastUpdate != currentCsvArray[0]){
+	        //this data is new
+	        lastUpdate = currentCsvArray[0];
+	        
+	        //push points into history?
+	      }
+	
+	      //more charts here
+	    }
+	
+	  }, fail: function() {
+	    debug("Error loading: " + path);
+	  }
+	});
 
 }
 
