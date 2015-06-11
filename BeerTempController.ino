@@ -113,21 +113,23 @@ void loop(){
   // Check temperatures against optimum settings and turn pump/peltier on or off, update screen with new statuses and temps 
   motorCheck();
 
-  //update the screen
-  updateScreen();
+  // Placed commented section into a function
+  updateScreenWriteFilesWait();
+  //  //update the screen
+  //  updateScreen();
   
-  // Log variables to files
-  // Make a csv file for current batch (overwrites) and one for numbered batch (appended)
-  // Order of vars: timestamp, id, name, batch size, targetTemp, currentTemp, ambientTemp
-  writeDataFiles();
+  //  // Log variables to files
+  //  // Make a csv file for current batch (overwrites) and one for numbered batch (appended)
+  //  // Order of vars: timestamp, id, name, batch size, targetTemp, currentTemp, ambientTemp
+  //  writeDataFiles();
 
-  //Update screen every minute for 5 minutes, then loop to top
-  for (int i = 0; i < 5; i++){
-    // Delay for 1 minute
-    delay(1000);
-    // Update Screen
-    updateScreen();
-  }  
+  //  //Update screen every minute for 5 minutes, then loop to top
+  //  for (int i = 0; i < 5; i++){
+  //    // Delay for 1 minute
+  //    delay(1000);
+  //    // Update Screen
+  //   updateScreen();
+  // }  
 }
 
 /*
@@ -343,6 +345,24 @@ void updateScreen(){
   overwriteScreenText(0,10, String(peltStatus)); // 0 off ; 1 cool ; 2 heat
 
 }
+void updateScreenWriteFilesWait{
+  //update the screen
+  updateScreen();
+  
+  // Log variables to files
+  // Make a csv file for current batch (overwrites) and one for numbered batch (appended)
+  // Order of vars: timestamp, id, name, batch size, targetTemp, currentTemp, ambientTemp
+  writeDataFiles();
+
+  //Update screen every minute for 5 minutes, then loop to top
+  for (int i = 0; i < 5; i++){
+    // Delay for 1 minute
+    delay(1000);
+    // Update Screen
+    updateScreen();
+  }
+}
+
 
 /*----- MOTOR SHIELD FUNCTIONS ---------------
 --------------------------------------------*/
@@ -354,14 +374,27 @@ void motorCheck(){
     // Run peltier as heater
     motorGo(1,CCW,255); // peltier
     motorGo(0,CW,110); // pump/fan
+    // after starting motors, run the following until currentTemp is higher than target Temp
+    while(currentTemp < targetTemp){
+      updateScreenWriteFilesWait();
+    }
+    
   } else if (currentTemp > targetTempHigh){
     // Run peltier as cooler  
     motorGo(1,CW,255); // peltier
     motorGo(0,CW,110); // pump/fan
+    // after starting motors, run the following until currentTemp is lower than target Temp
+    while(currentTemp > targetTemp){
+      updateScreenWriteFilesWait();
+    }
   }
   else{
     motorOff(0); // peltier
     motorOff(1); // pump/fan
+    //  after stopping motors, run the following until currentTemp is outside the target temp range (high/low)
+    while(currentTemp < targetTempHigh && currentTemp > targetTempLow){
+      updateScreenWriteFilesWait();
+    }
   }
 }
 
