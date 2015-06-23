@@ -4,20 +4,21 @@ function debug(message){
 }
 
 var csvArray;
+var histArray;
 var csvString;
+var currentBatchID;
 var currentCsvArray;
 var lastUpdate;
 
-function loadFile(path){
+function loadFile(path, destinationArray){
     $.ajax({
     method: "GET",
     url: path,
     dataType: "text",
     success: function(data) {
       debug("Loaded: " + path);
-      csvString = data;
-      csvArray = parseCsvSimple(data, 1);
-      createHistoryChart(csvArray);
+      destinationArray = parseCsvSimple(data, 1);
+
     }, fail: function() {
       debug("Error loading data");
     }
@@ -25,25 +26,35 @@ function loadFile(path){
 }
 
 $(document).ready(function () {
-  
-  //load and parse the data
-    loadFile("data/1.csv");
-    
+  //Load current and parse
+  loadFile("data/current.csv", csvArray);
+  while(csvArray == null){
+  }
+  currentBatchID = csvArray [1][1];
+  //current batch id into variable 
+  $("#batchIDVariable").append(currentBatchID);
+  //loads current batch csv for history
+  loadFile("data/" + currentBatchID + ".csv", histArray);
+  while(histArray == null){
+  }
+
+  createHistoryChart(histArray);
+
   $("#loadLink").click(function(){
     loadFile($("#loadBox").val());
   });
-  
+
   setupLiveCharts();
   updateLiveCharts();
 });
 
 // create the actual chart after the data is loaded
 function createHistoryChart(data){
-  
+
         $('#container').highcharts('StockChart', {
             //title: {
             //    text: 'Batch #' + getColumn(data,1)[0] + " History",
-            //}, 
+            //},
             subtitle: {
                 text: ''
             }, xAxis: {
@@ -106,8 +117,8 @@ function createHistoryChart(data){
                 threshold: null,
                 zIndex: 2,
                 color: 'lightBlue'
-                
-                
+
+
             }]
         });
 }
@@ -232,7 +243,7 @@ function setupLiveCharts() {
                     }else{
                         return '<div style="text-align:center"><span style="font-size:25px;">Off</span></div>'
                     }
-                }    
+                }
             }
         }]
     }));
@@ -265,7 +276,7 @@ function setupLiveCharts() {
                      return '<div style="text-align:center"><span style="font-size:25px;">Off</span></div>'
                     }
                 }
-                
+
             }
         }]
     }));
@@ -278,7 +289,7 @@ function setupLiveCharts() {
 //updates live (current.csv) charts
 function updateLiveCharts() {
   path = "data/current.csv";
-  
+
   $.ajax({
     method: "GET",
     url: path,
@@ -286,12 +297,12 @@ function updateLiveCharts() {
     success: function(data) {
       debug("Loaded: " + path);
       currentCsvArray = parseCsvSimple(data, 1);
-      
+
       if(currentCsvArray.length == 1){
         var point,
             newVal,
             inc;
-        
+
         // push into current temp
         var chart = $('#container-current').highcharts();
         if (chart) {
@@ -299,7 +310,7 @@ function updateLiveCharts() {
             point.y = currentCsvArray[0][5];
             point.update(newVal);
         }
-  
+
         // push into ambient temp
         chart = $('#container-ambient').highcharts();
         if (chart) {
@@ -307,7 +318,7 @@ function updateLiveCharts() {
             point.y = currentCsvArray[0][6];
             point.update(newVal);
         }
-        
+
         // push into pump temp
         chart = $('#container-pump').highcharts();
         if (chart) {
@@ -327,13 +338,13 @@ function updateLiveCharts() {
         if(lastUpdate != currentCsvArray[0]){
           //this data is new
           lastUpdate = currentCsvArray[0];
-          
+
           //push points into history?
         }
-  
+
         //more charts here
       }
-  
+
     }, fail: function() {
       debug("Error loading: " + path);
     }
@@ -347,4 +358,4 @@ function updateLiveCharts() {
                \ \   /  /    `-_-'
            __,--`.`-'..'-_
           /____  USS BEER ||
-               `--.____,*/  
+               `--.____,*/

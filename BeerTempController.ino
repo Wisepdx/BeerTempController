@@ -61,14 +61,14 @@ int enpin[2] = {A0, A1}; // EN: Status of switches output (Analog pin)
 int batchId = 1;  // beer ID (always make 3 digit)
 String batchName = "unknown batch"; // beer name
 int batchSize = 0;  // beer batch size
-int targetTemp = 64;  // target temp of beer (In Fahrenheit)
+int targetTemp = 62;  // target temp of beer (In Fahrenheit)
 int pumpStatus = 0; // pump Status (0 = Off, 1 = On)
 int peltStatus = 0; // peltier status (0 = Off, 1 = Cool, 2 = Heat)
 float currentTemp;  // current temperature of beer (In Fahrenheit)
 float ambientTemp;  // ambient temperature of room (In Fahrenheit)
 unsigned long time; // current uptime in milliseconds
 String upTime = ""; // holder for uptime
-int tempDiff = 3; // range at which temperature can drift from target
+int tempDiff = 1; // range at which temperature can drift from target
 int targetTempHigh = targetTemp + tempDiff; // high end of temp range
 int targetTempLow = targetTemp - tempDiff;  // low end of temp range
 
@@ -210,9 +210,9 @@ void mailboxCheck(){
   // if there is a message in the Mailbox
   if (Mailbox.messageAvailable()){
     
-    for (int i=1;i<6;i++){
+    for (int i=1;i<4;i++){
       digitalWrite(13,HIGH);
-      delay(10000);
+      delay(1000);
       digitalWrite(13,LOW);
     }
     
@@ -362,7 +362,7 @@ void motorCheck(){
   // check temperature against target and alter motors accordingly
   if (currentTemp < targetTempLow){
     // run peltier as heater
-    motorGo(1,CW,200); // peltier
+    motorGo(1,CW,220); // peltier
     motorGo(0,CW,150); // pump/fan
     // after starting motors, run the following until currentTemp is higher than target Temp
     while(currentTemp < targetTemp){
@@ -372,7 +372,7 @@ void motorCheck(){
   else 
 if (currentTemp > targetTempHigh){
     // run peltier as cooler
-    motorGo(1,CCW,200); // peltier
+    motorGo(1,CCW,220); // peltier
     motorGo(0,CW,150); // pump/fan
     // after starting motors, run the following until currentTemp is lower than target Temp
     while(currentTemp > targetTemp){
