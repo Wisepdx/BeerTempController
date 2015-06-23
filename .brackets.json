@@ -1,0 +1,11 @@
+{
+    "jscodehints.detectedExclusions": [
+        "/Users/wisejon/GitHub/BeerTempController/arduino/www/Highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-web/src/main/webapp/WEB-INF/jspf/config.js",
+        "Users/wisejon/GitHub/BeerTempController/arduino/www/Highcharts-4.1.5/exporting-server/java/highcharts-export/highcharts-export-web/target/highcharts-export-web/resources/js/runmode",
+        "/Users/wisejon/GitHub/BeerTempController/arduino/www/Highcharts-4.1.5/js/themes/sand-signika.js",
+        "/Users/wisejon/GitHub/BeerTempController/arduino/www/Highcharts-4.1.5/js/themes/skies.js",
+        "/Users/wisejon/GitHub/BeerTempController/arduino/www/Highcharts-4.1.5/js/themes/grid.js",
+        "/Users/wisejon/GitHub/BeerTempController/arduino/www/Highcharts-4.1.5/js/themes/grid-light.js",
+        "/Users/wisejon/GitHub/BeerTempController/arduino/www/js/main.js"
+    ]
+}

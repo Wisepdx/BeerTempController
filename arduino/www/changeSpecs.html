@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title>Home</title>
+    <title>Change Specs</title>
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
@@ -19,8 +19,7 @@
     <script src="js/highstock.js"></script>
     <script src="js/highcharts-more.js"></script>
     <script src="js/solid-gauge.js"></script>
-    
-    <script src="js/main.js"></script>
+
 
 
 </head>
@@ -48,38 +47,45 @@
     </nav>
 
     <div class="container">
-
         <div class="row">
             <div class="col-xs-12 col-sm-12 col-md-12">
-                <h1>Current Batch</h1>
-                <p><b>Batch ID: </b>000&nbsp;&nbsp;<b>Batch Name: </b> Unknown Batch&nbsp;&nbsp;<b>Batch Size: </b> 10 Gallons</p>
+                <h1>Change Batch Settings</h1>
+                <p>Use the form below to make modifications to the controller. Changing the ID to a new number will create a new file.</p>
             </div>
         </div>
-        <div class="row">
-            
-            <div class="col-xs-12 col-sm-12 col-md-12">
-                <div id="container" style=""></div>
+        <form class="">
+            <div class="form-group">
+                <label for="inputID" class="control-label">ID: </label>
+                    <div class="">
+                        <input type="batchID" class="form-control" id="inputID" placeholder="Input Batch ID (Integer)">
+                    </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-xs-6 col-sm-6 col-md-3">
-                <h4>Current Temperature</h4>
-                <div id="container-current"></div>
+            <div class="form-group">
+                <label for="inputName" class="control-label">Batch Name: </label>
+                    <div class="">
+                        <input type="batchName" class="form-control" id="inputName" placeholder="Input Batch Name">
+                    </div>
             </div>
-            <div class="col-xs-6 col-sm-6 col-md-3">
-                <h4>Ambient Temperature</h4>
-                <div id="container-ambient" ></div>
+            <div class="form-group">
+                <label for="inputSize" class="control-label">Batch Size: </label>
+                    <div class="">
+                        <input type="batchSize" class="form-control" id="inputSize" placeholder="Input Batch Size (Integer)">
+                    </div>
             </div>
-            <div class="col-xs-6 col-sm-6 col-md-3">
-                <h4>Peltier Status</h4>
-                <div id="container-pelt" ></div>
+            <div class="form-group">
+                <label for="inputTarget" class="control-label">Target Temp: </label>
+                    <div class="">
+                        <input type="targetTemp" class="form-control" id="inputTarget" placeholder="Enter Target temp (Integer)">
+                    </div>
             </div>
-            <div class="col-xs-6 col-sm-6 col-md-3">
-                <h4>Pump Status</h4>
-                <div id="container-pump" ></div>
+            <div class="form-group">
+                <label for="inputTempRange" class="control-label">Temp +/- Range: </label>
+                    <div class="">
+                        <input type="tempRange" class="form-control" id="inputTempRange" placeholder="Enter +/- Temp Allowance (Integer)">
+                    </div>
             </div>
-        </div>
-            
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
 
     </div>
 </body>

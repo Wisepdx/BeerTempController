@@ -61,14 +61,14 @@ int enpin[2] = {A0, A1}; // EN: Status of switches output (Analog pin)
 int batchId = 1;  // beer ID (always make 3 digit)
 String batchName = "unknown batch"; // beer name
 int batchSize = 0;  // beer batch size
-int targetTemp = 60;  // target temp of beer (In Fahrenheit)
+int targetTemp = 64;  // target temp of beer (In Fahrenheit)
 int pumpStatus = 0; // pump Status (0 = Off, 1 = On)
 int peltStatus = 0; // peltier status (0 = Off, 1 = Cool, 2 = Heat)
 float currentTemp;  // current temperature of beer (In Fahrenheit)
 float ambientTemp;  // ambient temperature of room (In Fahrenheit)
 unsigned long time; // current uptime in milliseconds
 String upTime = ""; // holder for uptime
-int tempDiff = 1; // range at which temperature can drift from target
+int tempDiff = 3; // range at which temperature can drift from target
 int targetTempHigh = targetTemp + tempDiff; // high end of temp range
 int targetTempLow = targetTemp - tempDiff;  // low end of temp range
 
@@ -107,7 +107,7 @@ VOID LOOP START HERE
 void loop(){
 
   // check/read the mailbox
-  mailboxCheck();
+  // mailboxCheck();
 
   // update the screen
   updateScreen();
@@ -115,6 +115,9 @@ void loop(){
   // check temperatures against optimum settings and turn pump/peltier on or off, update screen with new statuses and temps
   // includes function to write datafiles and update screen every minute
   motorCheck();
+  
+  // update the screen
+  updateScreen();
 }
 
 /*
@@ -198,7 +201,6 @@ void writeDataFiles(){
         digitalWrite(13, LOW);
         delay(50);
   }
-
 }
 
 /*----- PARSE MAILBOX MESSAGE ----------------
@@ -207,6 +209,13 @@ void mailboxCheck(){
   String message;
   // if there is a message in the Mailbox
   if (Mailbox.messageAvailable()){
+    
+    for (int i=1;i<6;i++){
+      digitalWrite(13,HIGH);
+      delay(10000);
+      digitalWrite(13,LOW);
+    }
+    
     digitalWrite(13,HIGH);
     // read all the messages present in the queue
     while (Mailbox.messageAvailable()){
@@ -325,17 +334,23 @@ void updateScreen(){
   overwriteScreenText(0,4, String(peltStatus)); // 0 off ; 1 cool ; 2 heat  || 0,10
 
 }
+
 void updateScreenWriteFilesWait(){
 
+  // Check Mailbox
+  mailboxCheck();
+  
   // make a csv file for current batch (overwrites) and one for numbered batch (appended)
   // order of vars: timestamp, id, name, batch size, targetTemp, currentTemp, ambientTemp
   writeDataFiles();
-
-  // delay for 1 minute
-  delay(60000);
-
+  
   // update the screen
   updateScreen();
+
+  // delay for 1 minute
+  delay(10000);
+  
+  
 }
 
 
@@ -347,16 +362,18 @@ void motorCheck(){
   // check temperature against target and alter motors accordingly
   if (currentTemp < targetTempLow){
     // run peltier as heater
-    motorGo(1,CCW,255); // peltier
-    motorGo(0,CW,110); // pump/fan
+    motorGo(1,CW,200); // peltier
+    motorGo(0,CW,150); // pump/fan
     // after starting motors, run the following until currentTemp is higher than target Temp
     while(currentTemp < targetTemp){
       updateScreenWriteFilesWait();
     }
-  } else if (currentTemp > targetTempHigh){
+  } 
+  else 
+if (currentTemp > targetTempHigh){
     // run peltier as cooler
-    motorGo(1,CW,255); // peltier
-    motorGo(0,CW,110); // pump/fan
+    motorGo(1,CCW,200); // peltier
+    motorGo(0,CW,150); // pump/fan
     // after starting motors, run the following until currentTemp is lower than target Temp
     while(currentTemp > targetTemp){
       updateScreenWriteFilesWait();
@@ -420,9 +437,9 @@ void motorGo(uint8_t motor, uint8_t direct, uint8_t pwm){
       pumpStatus = 1;
     }else if (motor == 1){
       // set pelt status based on motor direction
-      if (direct == CCW){
+      if (direct == CW){
         peltStatus = 2;
-      }else if (direct == CW){
+      }else if (direct == CCW){
         peltStatus = 1;
       }
     }
