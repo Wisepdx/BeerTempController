@@ -3,14 +3,14 @@ function debug(message){
   $("#debug").append("<div class='debugMessage'>" + message + "</div>")
 }
 
-var csvArray;
-var histArray;
+var csvArray = [];
+var histArray = [];
 var csvString;
 var currentBatchID;
 var currentCsvArray;
 var lastUpdate;
 
-function loadFile(path, destinationArray){
+function loadFile(path, destinationArray, callbackFunction){
     $.ajax({
     method: "GET",
     url: path,
@@ -18,28 +18,37 @@ function loadFile(path, destinationArray){
     success: function(data) {
       debug("Loaded: " + path);
       destinationArray = parseCsvSimple(data, 1);
-
+      callbackFunction(destinationArray);    
     }, fail: function() {
       debug("Error loading data");
     }
   });
 }
-
-$(document).ready(function () {
-  //Load current and parse
-  loadFile("data/current.csv", csvArray);
-  while(csvArray == null){
-  }
-  currentBatchID = csvArray [1][1];
+function currentDataLoaded(data){
+    currentBatchID = data[0][1];
   //current batch id into variable 
   $("#batchIDVariable").append(currentBatchID);
+  loadFile("data/" + currentBatchID + ".csv", histArray, histDataLoaded);
+}
+function histDataLoaded(data){
+    alert(data);
+    createHistoryChart(data);
+}
+$(document).ready(function () {
+  //Load current and parse
+  
+  loadFile("data/current.csv", csvArray, currentDataLoaded);
+      
+  
+
   //loads current batch csv for history
-  loadFile("data/" + currentBatchID + ".csv", histArray);
-  while(histArray == null){
-  }
-
-  createHistoryChart(histArray);
-
+  
+//  if(histArray.length() == 0){
+//    loadFile("data/" + currentBatchID + ".csv", histArray);    
+//  }
+  
+//  
+  
   $("#loadLink").click(function(){
     loadFile($("#loadBox").val());
   });
