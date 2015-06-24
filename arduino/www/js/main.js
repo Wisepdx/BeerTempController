@@ -1,135 +1,167 @@
-
-function debug(message){
-  $("#debug").append("<div class='debugMessage'>" + message + "</div>")
+function debug(message) {
+    $("#debug").append("<div class='debugMessage'>" + message + "</div>");
 }
 
 var csvArray = [];
 var histArray = [];
 var csvString;
 var currentBatchID;
+var currentBatchSize;
+var currentBatchName;
 var currentCsvArray;
 var lastUpdate;
 
-function loadFile(path, destinationArray, callbackFunction){
+//get current page url and store in variable
+var pathname = window.location.pathname;
+//remove bs in front and .html
+pathname = pathname.replace(/\/\S*\//, ""); //removes all until last / in url path
+pathname = pathname.replace(/\Whtml/, ""); //removes .html in url path
+
+function loadFile(path, destinationArray, callbackFunction) {
     $.ajax({
-    method: "GET",
-    url: path,
-    dataType: "text",
-    success: function(data) {
-      debug("Loaded: " + path);
-      destinationArray = parseCsvSimple(data, 1);
-      callbackFunction(destinationArray);    
-    }, fail: function() {
-      debug("Error loading data");
-    }
-  });
+        method: "GET",
+        url: path,
+        dataType: "text",
+        success: function(data) {
+            debug("Loaded: " + path);
+            destinationArray = parseCsvSimple(data, 1);
+            callbackFunction(destinationArray);
+        },
+        fail: function() {
+            debug("Error loading data");
+        }
+    });
 }
-function currentDataLoaded(data){
+
+function currentDataLoaded(data) {
+    //current batch parts into variables
     currentBatchID = data[0][1];
-  //current batch id into variable 
-  $("#batchIDVariable").append(currentBatchID);
-  loadFile("data/" + currentBatchID + ".csv", histArray, histDataLoaded);
+    currentBatchName = data[0][2];
+    currentBatchSize = data[0][3];
+    
+    if (pathname = "index"){
+        //current batch vars into HTML 
+        $("#batchIDVariable").html("<b>Batch ID: </b><span>" + currentBatchID + "</span>");
+        $("#batchNameVariable").html("<b>Batch Name: </b><span>" + currentBatchName + "</span>");
+        $("#batchSizeVariable").html("<b>Batch Size: </b><span>" + currentBatchSize + " Gallons</span>");
+    }else {
+        //not necessary to load
+    }
+    
+    //create batch dropdown links for menu
+    var batchMenuNumber = currentBatchID;
+    var batchMenuHTML = ""
+    for (i=1; i <= currentBatchID; i++){
+        batchMenuHTML += '<li><a href="' + i +'.html">Batch #' + i + '</a></li>';
+    }
+    $("#batchDropdown").html(batchMenuHTML);
+    
+    
+    
+    if (pathname = "index"){
+        loadFile("data/" + currentBatchID + ".csv", histArray, histDataLoaded);
+    }else if (pathname = "changeSpecs"){
+        //dont load a history chart
+    }else{
+        loadFile("data/" + pathname + ".csv", histArray, histDataLoaded);
+    }
 }
-function histDataLoaded(data){
-    alert(data);
+
+function histDataLoaded(data) {
+    
     createHistoryChart(data);
 }
-$(document).ready(function () {
-  //Load current and parse
-  
-  loadFile("data/current.csv", csvArray, currentDataLoaded);
-      
-  
+$(document).ready(function() {
+    //Load current and parse
 
-  //loads current batch csv for history
-  
-//  if(histArray.length() == 0){
-//    loadFile("data/" + currentBatchID + ".csv", histArray);    
-//  }
-  
-//  
-  
-  $("#loadLink").click(function(){
-    loadFile($("#loadBox").val());
-  });
+    loadFile("data/current.csv", csvArray, currentDataLoaded);
 
-  setupLiveCharts();
-  updateLiveCharts();
+    $("#loadLink").click(function() {
+        loadFile($("#loadBox").val());
+    });
+
+    setupLiveCharts();
+    updateLiveCharts();
 });
 
 // create the actual chart after the data is loaded
-function createHistoryChart(data){
+function createHistoryChart(data) {
 
-        $('#container').highcharts('StockChart', {
-            //title: {
-            //    text: 'Batch #' + getColumn(data,1)[0] + " History",
-            //},
-            subtitle: {
-                text: ''
-            }, xAxis: {
-                gapGridLineWidth: 0
-            }, yAxis: {
-                gridLineColor: '#ECECEC',
-                minorGridLineColor: '#FAFAFA',
-                minorTickInterval: 'auto'
-            }, rangeSelector : {
-                buttons : [{
-                    type : 'hour',
-                    count : 1,
-                    text : '1h'
-                }, {
-                    type : 'day',
-                    count : 1,
-                    text : '1d'
-                }, {
-                    type : 'day',
-                    count : 2,
-                    text : '2d'
-                }, {
-                    type : 'day',
-                    count : 3,
-                    text : '3d'
-                }, {
-                    type : 'all',
-                    count : 1,
-                    text : 'All'
-                }],
-                selected : 1,
-                inputEnabled : false
-            }, credits: {
-               enabled: false
-            }, series : [{
-                name : 'Current',
-                type: 'line',
-                data : getColumns(data,[0,5]),
-                tooltip: {
-                    valueDecimals: 2
-                },
-                lineWidth: 4,
-                threshold: null,
-                zIndex: 3,
-                color: 'limeGreen'
-            },{
-                name : 'Target',
-                type: 'line',
-                data : getColumns(data,[0,4]),
-                threshold: null,
-                lineWidth: 4,
-                zIndex: 1,
-                color: '#DDDDDD',
-                dashStyle: 'ShortDot'
-            },{
-                name : 'Ambient',
-                type: 'line',
-                lineWidth: 4,
-                data : getColumns(data,[0,6]),
-                threshold: null,
-                zIndex: 2,
-                color: 'lightBlue'
+    $('#container').highcharts('StockChart', {
+        //title: {
+        //    text: 'Batch #' + getColumn(data,1)[0] + " History",
+        //},
+        subtitle: {
+            text: ''
+        },
+        xAxis: {
+            gapGridLineWidth: 0
+        },
+        yAxis: {
+            gridLineColor: '#ECECEC',
+            minorGridLineColor: '#FAFAFA',
+            minorTickInterval: 'auto'
+        },
+        rangeSelector: {
+            buttons: [{
+                type: 'hour',
+                count: 1,
+                text: '1h'
+            }, {
+                type: 'day',
+                count: 1,
+                text: '1d'
+            }, {
+                type: 'day',
+                count: 2,
+                text: '2d'
+            }, {
+                type: 'day',
+                count: 3,
+                text: '3d'
+            }, {
+                type: 'all',
+                count: 1,
+                text: 'All'
+            }],
+            selected: 1,
+            inputEnabled: false
+        },
+        credits: {
+            enabled: false
+        },
+        series: [{
+            name: 'Current',
+            type: 'line',
+            data: getColumns(data, [0, 5]),
+            tooltip: {
+                valueDecimals: 2
+            },
+            lineWidth: 4,
+            threshold: null,
+            zIndex: 3,
+            color: 'limeGreen'
+        }, {
+            name: 'Target',
+            type: 'line',
+            data: getColumns(data, [0, 4]),
+            threshold: null,
+            lineWidth: 4,
+            zIndex: 1,
+            color: '#DDDDDD',
+            dashStyle: 'ShortDot'
+        }, {
+            name: 'Ambient',
+            type: 'line',
+            lineWidth: 4,
+            data: getColumns(data, [0, 6]),
+            threshold: null,
+            zIndex: 2,
+            color: 'lightBlue'
 
 
-            }]
-        });
+        }]
+    });
 }
 
 //creates the charts that are updated with current data
@@ -140,7 +172,8 @@ function setupLiveCharts() {
         chart: {
             type: 'solidgauge',
             height: 150
-        }, title: null,
+        },
+        title: null,
         pane: {
             center: ['50%', '65%'],
             size: '130%',
@@ -152,9 +185,11 @@ function setupLiveCharts() {
                 outerRadius: '100%',
                 shape: 'arc'
             }
-        }, tooltip: {
+        },
+        tooltip: {
             enabled: false
-        }, yAxis: {
+        },
+        yAxis: {
             stops: [
                 [0.1, '#55BF3B'], // green
                 [0.5, '#DDDF0D'], // yellow
@@ -166,10 +201,12 @@ function setupLiveCharts() {
             tickWidth: 0,
             title: {
                 y: 0
-            }, labels: {
+            },
+            labels: {
                 y: 15
             }
-        }, plotOptions: {
+        },
+        plotOptions: {
             solidgauge: {
                 dataLabels: {
                     y: 0,
@@ -190,16 +227,19 @@ function setupLiveCharts() {
                 [0.5, '#DDDF0D'], // yellow
                 [0.9, '#DF5353'] // red
             ]
-        }, credits: {
+        },
+        credits: {
             enabled: false
-        }, series: [{
+        },
+        series: [{
             name: 'Current Temp',
             data: [50],
             dataLabels: {
                 format: '<div style="text-align:center"><span style="font-size:25px;color:' +
-                    ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span></div>'// +
-                       //'<span style="font-size:12px;color:silver">f</span></div>'
-            }, tooltip: {
+                    ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y}</span></div>' // +
+                    //'<span style="font-size:12px;color:silver">f</span></div>'
+            },
+            tooltip: {
                 valueSuffix: ' f'
             }
         }]
@@ -215,15 +255,18 @@ function setupLiveCharts() {
                 [0.5, '#DDDF0D'], // yellow
                 [0.9, '#DF5353'] // red
             ]
-        }, credits: {
+        },
+        credits: {
             enabled: false
-        }, series: [{
+        },
+        series: [{
             name: 'Ambient',
             data: [1],
             dataLabels: {
                 format: '<div style="text-align:center"><span style="font-size:25px;color:' +
                     ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y:.1f}</span></div>'
-            }, tooltip: {
+            },
+            tooltip: {
                 valueSuffix: ' f'
             }
         }]
@@ -231,25 +274,27 @@ function setupLiveCharts() {
 
     // The Pump Status Gauge - current.csv
     $('#container-pump').highcharts(Highcharts.merge(gaugeOptions, {
-         yAxis: {
+        yAxis: {
             min: 0,
             max: 1,
             stops: [
                 [0.9, '#55BF3B'] // green
             ],
-            labels:{
+            labels: {
                 enabled: false
             }
-        }, credits: {
+        },
+        credits: {
             enabled: false
-        }, series: [{
+        },
+        series: [{
             name: 'Pump',
             data: [1],
             dataLabels: {
-                formatter: function(){
-                    if(this.y > 0){
+                formatter: function() {
+                    if (this.y > 0) {
                         return '<div style="text-align:center"><span style="font-size:25px;">On</span></div>'
-                    }else{
+                    } else {
                         return '<div style="text-align:center"><span style="font-size:25px;">Off</span></div>'
                     }
                 }
@@ -262,109 +307,112 @@ function setupLiveCharts() {
             min: 0,
             max: 2,
             stops: [
-                [0.5, '#FF0100'], // red
-                [0.9, '#0C6BBF'], // blue
+                [0.5, '#0C6BBF'], // blue
+                [0.9, '##FF0100'], // red
             ],
-            labels:{
+            labels: {
                 enabled: false
             }
-        }, credits: {
+        },
+        credits: {
             enabled: false
-        }, series: [{
+        },
+        series: [{
             name: 'Pelt',
             data: [1],
             dataLabels: {
-                formatter: function(){
-                    if(this.y > 0){
-                        if(this.y == 1){
-                         return '<div style="text-align:center"><span style="font-size:25px;">Heat</span></div>'
-                        } else{
-                         return '<div style="text-align:center"><span style="font-size:25px;">Cool</span></div>'
+                formatter: function() {
+                    if (this.y > 0) {
+                        if (this.y == 1) {
+                            return '<div style="text-align:center"><span style="font-size:25px;">Cool</span></div>'
+                        } else {
+                            return '<div style="text-align:center"><span style="font-size:25px;">Heat</span></div>'
                         }
-                    }else{
-                     return '<div style="text-align:center"><span style="font-size:25px;">Off</span></div>'
+                    } else {
+                        return '<div style="text-align:center"><span style="font-size:25px;">Off</span></div>'
                     }
                 }
 
             }
         }]
     }));
-
+    
     //Run this every 30 seconds
-    setInterval(updateLiveCharts, 30000);
+    setInterval(updateLiveCharts, 1000);
 
 }
 
 //updates live (current.csv) charts
 function updateLiveCharts() {
-  path = "data/current.csv";
+    path = "data/current.csv";
 
-  $.ajax({
-    method: "GET",
-    url: path,
-    dataType: "text",
-    success: function(data) {
-      debug("Loaded: " + path);
-      currentCsvArray = parseCsvSimple(data, 1);
+    $.ajax({
+        method: "GET",
+        url: path,
+        dataType: "text",
+        success: function(data) {
+            debug("Loaded: " + path);
+            currentCsvArray = parseCsvSimple(data, 1);
 
-      if(currentCsvArray.length == 1){
-        var point,
-            newVal,
-            inc;
+            if (currentCsvArray.length == 1) {
+                var point,
+                    newVal,
+                    inc;
 
-        // push into current temp
-        var chart = $('#container-current').highcharts();
-        if (chart) {
-            point = chart.series[0].points[0];
-            point.y = currentCsvArray[0][5];
-            point.update(newVal);
+                // push into current temp
+                var chart = $('#container-current').highcharts();
+                if (chart) {
+                    point = chart.series[0].points[0];
+                    point.y = currentCsvArray[0][5];
+                    point.update(newVal);
+                }
+
+                // push into ambient temp
+                chart = $('#container-ambient').highcharts();
+                if (chart) {
+                    point = chart.series[0].points[0];
+                    point.y = currentCsvArray[0][6];
+                    point.update(newVal);
+                }
+
+                // push into pump temp
+                chart = $('#container-pump').highcharts();
+                if (chart) {
+                    point = chart.series[0].points[0];
+                    point.y = currentCsvArray[0][7];
+                    point.update(newVal);
+                }
+
+                // push into pelt status
+                chart = $('#container-pelt').highcharts();
+                if (chart) {
+                    point = chart.series[0].points[0];
+                    point.y = currentCsvArray[0][8];
+                    point.update(newVal);
+                }
+
+                if (lastUpdate != currentCsvArray[0]) {
+                    //this data is new
+                    lastUpdate = currentCsvArray[0];
+
+                    //push points into history?
+                }
+
+                //more charts here
+            }
+
+        },
+        fail: function() {
+            debug("Error loading: " + path);
         }
-
-        // push into ambient temp
-        chart = $('#container-ambient').highcharts();
-        if (chart) {
-            point = chart.series[0].points[0];
-            point.y = currentCsvArray[0][6];
-            point.update(newVal);
-        }
-
-        // push into pump temp
-        chart = $('#container-pump').highcharts();
-        if (chart) {
-            point = chart.series[0].points[0];
-            point.y = currentCsvArray[0][7];
-            point.update(newVal);
-        }
-
-        // push into pelt status
-        chart = $('#container-pelt').highcharts();
-        if (chart) {
-            point = chart.series[0].points[0];
-            point.y = currentCsvArray[0][8];
-            point.update(newVal);
-        }
-
-        if(lastUpdate != currentCsvArray[0]){
-          //this data is new
-          lastUpdate = currentCsvArray[0];
-
-          //push points into history?
-        }
-
-        //more charts here
-      }
-
-    }, fail: function() {
-      debug("Error loading: " + path);
-    }
-  });
+    });
 
 }
 
- /*_________________          _-_
- \==============_=_/ ____.---'---`---.____
-             \_ \    \----._________.----/
-               \ \   /  /    `-_-'
-           __,--`.`-'..'-_
-          /____  USS BEER ||
-               `--.____,*/
+/*_________________          _-_
+\==============_=_/ ____.---'---`---.____
+            \_ \    \----._________.----/
+              \ \   /  /    `-_-'
+          __,--`.`-'..'-_
+         /____  USS BEER ||
+              `--.____,*/
