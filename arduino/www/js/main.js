@@ -13,9 +13,7 @@ var lastUpdate;
 
 //get current page url and store in variable
 var pathname = window.location.pathname;
-//remove bs in front and .html
-pathname = pathname.replace(/\/\S*\//, ""); //removes all until last / in url path
-pathname = pathname.replace(/\Whtml/, ""); //removes .html in url path
+
 
 function loadFile(path, destinationArray, callbackFunction) {
     $.ajax({
@@ -72,8 +70,11 @@ function histDataLoaded(data) {
     createHistoryChart(data);
 }
 $(document).ready(function() {
+    //remove bs in front and .html
+    pathname = pathname.replace(/\/\S*\//, ""); //removes all until last / in url path
+    pathname = pathname.replace(/\Whtml/, ""); //removes .html in url path
+    
     //Load current and parse
-
     loadFile("data/current.csv", csvArray, currentDataLoaded);
 
     $("#loadLink").click(function() {
