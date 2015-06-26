@@ -10,6 +10,7 @@ var currentBatchSize;
 var currentBatchName;
 var currentCsvArray;
 var lastUpdate;
+var mailboxURL;
 
 //get current page url and store in variable
 var pathname = window.location.pathname;
@@ -408,6 +409,37 @@ function updateLiveCharts() {
         }
     });
 
+}
+
+function mailboxLink(){
+    //Combines Fields for Update Link
+
+    // Declare variables
+    var mailboxArray = []; //array to hold everything
+    var mailboxURLPrefix = "arduino.local/mailbox?"
+    var mailboxInputID = "batchid=" + $('input[id="inputID"]').val()
+    var mailboxInputName = "batchname=" + $('input[id="inputName"]').val()
+    var mailboxInputSize = "batchsize=" + $('input[id="inputSize"]').val()
+    var mailboxInputTarget = "targettemp=" + $('input[id="inputTarget"]').val()
+    var mailboxInputTempRange = "tempdiff=" + $('input[id="inputTempRange"]').val()
+
+    //place into an array
+    if (mailboxInputID != null){mailboxArray.push(mailboxInputID)}
+    if (mailboxInputName != null){mailboxArray.push(mailboxInputName)}
+    if (mailboxInputSize != null){mailboxArray.push(mailboxInputSize)}
+    if (mailboxInputTarget != null){mailboxArray.push(mailboxInputTarget)}
+    if (mailboxInputTempRange != null){mailboxArray.push(mailboxInputTempRange)}
+    
+    //Build URL
+    mailboxURL = mailboxURLPrefix;
+    if (mailboxArray.length > 1){
+        for (i=0; i <= mailboxArray.length; i++){
+            mailboxURL += mailboxArray[i]; + "&"
+        } 
+    } else {
+        mailboxURL += mailboxArray[0];
+    }
+    return mailboxURL;
 }
 
 /*_________________          _-_
