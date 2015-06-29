@@ -10,7 +10,7 @@ var currentBatchSize;
 var currentBatchName;
 var currentCsvArray;
 var lastUpdate;
-var mailboxURL;
+var mailboxURL = "";
 
 //get current page url and store in variable
 var pathname = window.location.pathname;
@@ -37,37 +37,39 @@ function currentDataLoaded(data) {
     currentBatchID = data[0][1];
     currentBatchName = data[0][2];
     currentBatchSize = data[0][3];
-    
-    if (pathname = "index"){
+
+    if (pathname == "index") {
         //current batch vars into HTML 
         $("#batchIDVariable").html("<b>Batch ID: </b><span>" + currentBatchID + "</span>");
         $("#batchNameVariable").html("<b>Batch Name: </b><span>" + currentBatchName + "</span>");
         $("#batchSizeVariable").html("<b>Batch Size: </b><span>" + currentBatchSize + " Gallons</span>");
-    }else {
+    } else {
         //not necessary to load
     }
-    
+
     //create batch dropdown links for menu
     var batchMenuNumber = currentBatchID;
     var batchMenuHTML = ""
-    for (i=1; i <= currentBatchID; i++){
-        batchMenuHTML += '<li><a href="' + i +'.html">Batch #' + i + '</a></li>';
+    for (i = 1; i <= currentBatchID; i++) {
+        batchMenuHTML += '<li><a href="' + i + '.html">Batch #' + i + '</a></li>';
     }
     $("#batchDropdown").html(batchMenuHTML);
+    //if batch is a historical page set batch number to pathname
+    if ((pathname !== "index") && (pathname !== "changeSpecs")){
+        currentBatchID = pathname;
+    }
     
-    
-    
-    if (pathname = "index"){
+    if (pathname == "index") {
         loadFile("data/" + currentBatchID + ".csv", histArray, histDataLoaded);
-    }else if (pathname = "changeSpecs"){
+    } else if (pathname == "changeSpecs") {
         //dont load a history chart
-    }else{
+    } else {
         loadFile("data/" + pathname + ".csv", histArray, histDataLoaded);
     }
 }
 
 function histDataLoaded(data) {
-    
+
     createHistoryChart(data);
 }
 $(document).ready(function() {
@@ -75,8 +77,14 @@ $(document).ready(function() {
     pathname = pathname.replace(/\/\S*\//, ""); //removes all until last / in url path
     pathname = pathname.replace(/\Whtml/, ""); //removes .html in url path
     
-    //Load current and parse
-    loadFile("data/current.csv", csvArray, currentDataLoaded);
+//    if ((pathname == "index") || (pathname == "changeSpecs")){
+        //Load current and parse
+        loadFile("data/current.csv", csvArray, currentDataLoaded);
+//    } else{
+//        //Load current and parse
+//        loadFile("data/" + pathname + ".csv", histArray, histDataLoaded);
+//    }
+    
 
     $("#loadLink").click(function() {
         loadFile($("#loadBox").val());
@@ -338,7 +346,7 @@ function setupLiveCharts() {
             }
         }]
     }));
-    
+
     //Run this every 30 seconds
     setInterval(updateLiveCharts, 1000);
 
@@ -411,10 +419,17 @@ function updateLiveCharts() {
 
 }
 
-function mailboxLink(){
-    //Combines Fields for Update Link
+function myFunction() {
+    text += "</ul>";
+    document.getElementById("demo").innerHTML = text;
+
+    //$("#TestAppend").append("<H1>Hello<h1>");
+}
+
+function setMailboxLink() {
 
     // Declare variables
+    var mailboxURL = "";
     var mailboxArray = []; //array to hold everything
     var mailboxURLPrefix = "arduino.local/mailbox?"
     var mailboxInputID = "batchid=" + $('input[id="inputID"]').val()
@@ -424,22 +439,40 @@ function mailboxLink(){
     var mailboxInputTempRange = "tempdiff=" + $('input[id="inputTempRange"]').val()
 
     //place into an array
-    if (mailboxInputID != null){mailboxArray.push(mailboxInputID)}
-    if (mailboxInputName != null){mailboxArray.push(mailboxInputName)}
-    if (mailboxInputSize != null){mailboxArray.push(mailboxInputSize)}
-    if (mailboxInputTarget != null){mailboxArray.push(mailboxInputTarget)}
-    if (mailboxInputTempRange != null){mailboxArray.push(mailboxInputTempRange)}
-    
+    if ($('input[id="inputID"]').val() !== "") {
+        mailboxArray.push(mailboxInputID)
+    }
+    if ($('input[id="inputName"]').val() !== "") {
+        mailboxArray.push(mailboxInputName);
+    }
+
+    if ($('input[id="inputSize"]').val() !== "") {
+        mailboxArray.push(mailboxInputSize)
+    }
+    if ($('input[id="inputTarget"]').val() !== "") {
+        mailboxArray.push(mailboxInputTarget)
+    }
+    if ($('input[id="inputTempRange"]').val() !== "") {
+        mailboxArray.push(mailboxInputTempRange)
+    }
     //Build URL
     mailboxURL = mailboxURLPrefix;
-    if (mailboxArray.length > 1){
-        for (i=0; i <= mailboxArray.length; i++){
-            mailboxURL += mailboxArray[i]; + "&"
-        } 
+    if (mailboxArray.length > 1) {
+        for (i = 0; i <= (mailboxArray.length - 1); i++) {
+            if (i !== (mailboxArray.length - 1)) {
+                mailboxURL += mailboxArray[i] + "&";
+            } else {
+                mailboxURL += mailboxArray[i]
+            }
+        }
+
     } else {
         mailboxURL += mailboxArray[0];
     }
-    return mailboxURL;
+    //replace link with mailboxURL
+
+    $("#mailboxLink").attr("href", mailboxURL);
+
 }
 
 /*_________________          _-_
