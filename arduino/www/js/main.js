@@ -1,6 +1,4 @@
-function debug(message) {
-    $("#debug").append("<div class='debugMessage'>" + message + "</div>");
-}
+
 
 var csvArray = [];
 var histArray = [];
@@ -11,6 +9,7 @@ var currentBatchName;
 var currentCsvArray;
 var lastUpdate;
 var mailboxURL = "";
+var chartCurrentTemp = "null";
 
 //get current page url and store in variable
 var pathname = window.location.pathname;
@@ -54,6 +53,7 @@ function currentDataLoaded(data) {
         batchMenuHTML += '<li><a href="' + i + '.html">Batch #' + i + '</a></li>';
     }
     $("#batchDropdown").html(batchMenuHTML);
+    
     //if batch is a historical page set batch number to pathname
     if ((pathname !== "index") && (pathname !== "changeSpecs")){
         currentBatchID = pathname;
@@ -77,21 +77,17 @@ $(document).ready(function() {
     pathname = pathname.replace(/\/\S*\//, ""); //removes all until last / in url path
     pathname = pathname.replace(/\Whtml/, ""); //removes .html in url path
     
-//    if ((pathname == "index") || (pathname == "changeSpecs")){
-        //Load current and parse
-        loadFile("data/current.csv", csvArray, currentDataLoaded);
-//    } else{
-//        //Load current and parse
-//        loadFile("data/" + pathname + ".csv", histArray, histDataLoaded);
-//    }
+    //Load current and parse
+    loadFile("data/current.csv", csvArray, currentDataLoaded);
     
-
+    bindDebug("D", ToggleDebug, null);
+    
     $("#loadLink").click(function() {
         loadFile($("#loadBox").val());
     });
 
     setupLiveCharts();
-    updateLiveCharts();
+    //updateLiveCharts();
 });
 
 // create the actual chart after the data is loaded
@@ -348,40 +344,47 @@ function setupLiveCharts() {
     }));
 
     //Run this every 30 seconds
-    setInterval(updateLiveCharts, 1000);
+    updateLiveCharts();
+    setInterval(updateLiveCharts, 10000);
 
 }
 
 //updates live (current.csv) charts
 function updateLiveCharts() {
     path = "data/current.csv";
-
     $.ajax({
         method: "GET",
         url: path,
         dataType: "text",
         success: function(data) {
             debug("Loaded: " + path);
-            currentCsvArray = parseCsvSimple(data, 1);
+            csvArray = parseCsvSimple(data, 1);
 
-            if (currentCsvArray.length == 1) {
+            if (csvArray.length == 1) {
                 var point,
                     newVal,
                     inc;
+                
+                var testCurrentTemp;
 
                 // push into current temp
-                var chart = $('#container-current').highcharts();
-                if (chart) {
-                    point = chart.series[0].points[0];
-                    point.y = currentCsvArray[0][5];
+                //if (currentChartTemp == "null"){
+                    //alert("test");
+                testCurrentTemp = $('#container-current').highcharts();
+            //}
+                //alert(testCurrentTemp);
+                //if (testCurrentTemp) {
+                    
+                    point = testCurrentTemp.series[0].points[0];
+                    point.y = csvArray[0][5];
                     point.update(newVal);
-                }
+                //}
 
                 // push into ambient temp
                 chart = $('#container-ambient').highcharts();
                 if (chart) {
                     point = chart.series[0].points[0];
-                    point.y = currentCsvArray[0][6];
+                    point.y = csvArray[0][6];
                     point.update(newVal);
                 }
 
@@ -389,7 +392,7 @@ function updateLiveCharts() {
                 chart = $('#container-pump').highcharts();
                 if (chart) {
                     point = chart.series[0].points[0];
-                    point.y = currentCsvArray[0][7];
+                    point.y = csvArray[0][7];
                     point.update(newVal);
                 }
 
@@ -397,13 +400,13 @@ function updateLiveCharts() {
                 chart = $('#container-pelt').highcharts();
                 if (chart) {
                     point = chart.series[0].points[0];
-                    point.y = currentCsvArray[0][8];
+                    point.y = csvArray[0][8];
                     point.update(newVal);
                 }
 
-                if (lastUpdate != currentCsvArray[0]) {
+                if (lastUpdate != csvArray[0]) {
                     //this data is new
-                    lastUpdate = currentCsvArray[0];
+                    lastUpdate = csvArray[0];
 
                     //push points into history?
                 }
@@ -416,14 +419,6 @@ function updateLiveCharts() {
             debug("Error loading: " + path);
         }
     });
-
-}
-
-function myFunction() {
-    text += "</ul>";
-    document.getElementById("demo").innerHTML = text;
-
-    //$("#TestAppend").append("<H1>Hello<h1>");
 }
 
 function setMailboxLink() {
@@ -473,6 +468,82 @@ function setMailboxLink() {
 
     $("#mailboxLink").attr("href", mailboxURL);
 
+}
+
+var enableDebugMessages = true; 	//Enable the debug log
+
+
+
+var debugInt = 0;
+//function debug(Message) {
+//    if (enableDebugMessages) {
+//
+//        if (debugInt == 0) {
+//            jQuery("html").append("<div id='DebugArea'><div class='DebugHeader DebugAreaButton'>HPN Debug</div><ol></ol></div>");
+//            jQuery("#PageFooter").prepend("<span class='DebugAreaButton DebugHide'>_ </div>");
+//
+//            jQuery(".DebugAreaButton").click(function () {
+//                ToggleDebug();
+//            });
+//        }
+//
+//        debugInt++;
+//        if (Message.toLowerCase().indexOf("error") > 0) {
+//            jQuery("#DebugArea ol").append("<li class='DebugMessage DebugMessageError'>" + Message + "</li>");
+//        } else {
+//            jQuery("#DebugArea ol").append("<li class='DebugMessage'>" + Message + "</li>");
+//        }
+//    }
+//}
+
+function debug(message) {
+    $("#debug").append("<div class='debugMessage'>" + message + "</div>");
+}
+
+function debugAppend(Message) {
+    if (enableDebugMessages) {
+        if (debugInt == 0) {
+            debug(Message);
+        } else {
+            jQuery("#debug ol li").last().append(Message);
+        }
+    }
+
+}
+
+function debugVisable() {
+    return jQuery("#debug").is(":visible");
+}
+
+function ToggleDebug() {
+    jQuery("#debug").slideToggle();
+	
+	/*
+    if(keepAlive == false){
+		keepAlive = true;
+		foreverSession();
+	}
+    */
+}
+
+//binds a CTRL+ALT+(somthing) keypress to a function
+function bindDebug(key, callback, args) {
+    var isCtrl = false;
+    var isAlt = false;
+    
+    jQuery(document).keydown(function(e) {
+        if(!args) args=[]; // IE barks when args is null
+
+        if(e.ctrlKey) isCtrl = true;
+        if(e.altKey) isAlt = true;
+        
+        if(e.keyCode == key.charCodeAt(0) && isCtrl && isAlt) {
+            callback.apply(this, args);
+            return false;
+        }
+    }).keyup(function(e) {
+        if(e.ctrlKey) isCtrl = false;
+    });
 }
 
 /*_________________          _-_
